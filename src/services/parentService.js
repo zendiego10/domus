@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import { generateFamilyCode } from "../utils/helpers";
 
 async function generateUniqueFamilyCode() {
+  // Repite hasta encontrar un codigo familiar que no exista en la tabla parents.
   let isUnique = false;
   let code = "";
 
@@ -17,6 +18,7 @@ async function generateUniqueFamilyCode() {
       throw error;
     }
 
+    // Si no devuelve filas, el codigo es libre y se puede usar.
     if (!data || data.length === 0) {
       isUnique = true;
     }
@@ -26,8 +28,10 @@ async function generateUniqueFamilyCode() {
 }
 
 export async function registerParent(parentData) {
+  // Primero genera el codigo familiar para enlazar futuros hijos.
   const familyCode = await generateUniqueFamilyCode();
 
+  // Inserta el registro del padre/madre en Supabase.
   const { data, error } = await supabase
     .from("parents")
     .insert([
@@ -50,10 +54,12 @@ export async function registerParent(parentData) {
     throw error;
   }
 
+  // Retorna el registro creado para usarlo en UI (ej: mostrar family_code).
   return data[0];
 }
 
 export async function loginParent(identifier, password) {
+  // Permite iniciar sesion con username o email.
   const { data, error } = await supabase
     .from("parents")
     .select("*")
@@ -69,6 +75,7 @@ export async function loginParent(identifier, password) {
 
   const parent = data[0];
 
+  // Compara credencial enviada contra el campo password almacenado.
   if (parent.password !== password) {
     throw new Error("INVALID_PASSWORD");
   }
@@ -77,6 +84,7 @@ export async function loginParent(identifier, password) {
 }
 
 export async function findParentByEmail(email) {
+  // Verifica si existe un padre con ese correo para flujo de recuperar clave.
   const { data, error } = await supabase
     .from("parents")
     .select("id, email, username")

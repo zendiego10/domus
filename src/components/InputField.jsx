@@ -8,6 +8,7 @@ function InputField({
   required = false,
 }) {
   return (
+    // Campo controlado reutilizable para evitar duplicar markup de inputs.
     <div className="input-group">
       <label htmlFor={name}>{label}</label>
       <input

@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <BrowserRouter>
+      {/* Define todas las rutas de la app y redirige la raiz al login de padres. */}
       <Routes>
         <Route path="/" element={<Navigate to="/login-parent" replace />} />
         <Route path="/login-parent" element={<LoginParent />} />
@@ -18,6 +19,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register-child" element={<RegisterChild />} />
         <Route path="/login-child" element={<LoginChild />} />
+        {/* Zona protegida para cuentas con rol padre/madre. */}
         <Route
           path="/parent-home"
           element={
@@ -27,6 +29,7 @@ function App() {
           }
         />
 
+        {/* Zona protegida para cuentas con rol hijo. */}
         <Route
           path="/child-home"
           element={

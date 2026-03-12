@@ -7,15 +7,18 @@ import { isValidEmail } from "../utils/validators";
 import { findParentByEmail } from "../services/parentService";
 
 function ForgotPassword() {
+  // Formulario minimo: solo correo para verificar existencia de cuenta.
   const [formData, setFormData] = useState({
     email: "",
   });
 
+  // Estado de errores, mensaje de confirmacion y loading.
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
+    // Sincroniza input de correo con el estado.
     const { name, value } = event.target;
 
     setFormData((prev) => ({
@@ -25,6 +28,7 @@ function ForgotPassword() {
   }
 
   function validateForm() {
+    // Verifica que haya correo y que cumpla formato basico.
     const newErrors = {};
 
     if (!formData.email.trim()) {
@@ -39,6 +43,7 @@ function ForgotPassword() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Valida y evita consultar backend si hay errores locales.
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage("");
@@ -50,6 +55,7 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
+      // Solo comprueba existencia del correo por ahora (sin envio real).
       await findParentByEmail(formData.email.trim());
 
       setSuccessMessage(
@@ -64,6 +70,7 @@ function ForgotPassword() {
     } catch (error) {
       console.error(error);
 
+      // Mapea errores del servicio a mensajes amigables.
       if (error.message === "EMAIL_NOT_FOUND") {
         setErrors({
           email: "Ese correo no coincide con ningún registro del sistema.",

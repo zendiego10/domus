@@ -8,17 +8,21 @@ import { useNavigate } from "react-router-dom";
 import { saveUserSession } from "../utils/auth";
 
 function LoginParent() {
+  // Navegacion programatica despues de autenticar.
   const navigate = useNavigate();
+  // Estado del formulario de login.
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
   });
 
+  // Estado de errores por campo, mensaje de exito y loading del boton.
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
+    // Mantiene sincronizado el estado con lo que el usuario escribe.
     const { name, value } = event.target;
 
     setFormData((prev) => ({
@@ -28,6 +32,7 @@ function LoginParent() {
   }
 
   function validateForm() {
+    // Validaciones basicas antes de consultar backend.
     const newErrors = {};
 
     if (!formData.identifier.trim()) {
@@ -44,6 +49,7 @@ function LoginParent() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Ejecuta validaciones y corta flujo si hay errores.
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage("");
@@ -55,11 +61,13 @@ function LoginParent() {
     try {
       setLoading(true);
 
+      // Consulta credenciales en el servicio de padres.
       const parent = await loginParent(
         formData.identifier.trim(),
         formData.password
       );
 
+      // Guarda sesion local para habilitar rutas protegidas.
       saveUserSession({
         role: "parent",
         id: parent.id,
@@ -73,6 +81,7 @@ function LoginParent() {
         `Inicio de sesión exitoso. Bienvenido, ${parent.first_name}.`
       );
 
+      // Muestra feedback breve antes de navegar al home.
       setTimeout(() => {
         navigate("/parent-home");
       }, 1000);
@@ -81,6 +90,7 @@ function LoginParent() {
     } catch (error) {
       console.error(error);
 
+      // Traduce errores tecnicos a mensajes entendibles en UI.
       if (error.message === "PARENT_NOT_FOUND") {
         setErrors({
           identifier: "El usuario o correo no está registrado.",

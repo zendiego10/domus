@@ -9,19 +9,22 @@ import { useNavigate } from "react-router-dom";
 import { saveUserSession } from "../utils/auth";
 
 function LoginChild() {
-
+  // Navegacion programatica despues de autenticar.
   const navigate = useNavigate();
 
+  // Estado del formulario de login de hijo.
   const [formData, setFormData] = useState({
     username: "",
     pin: "",
   });
 
+  // Estado de errores, mensajes de exito y loading.
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
+    // Actualiza el campo modificado por el usuario.
     const { name, value } = event.target;
 
     setFormData((prev) => ({
@@ -31,6 +34,7 @@ function LoginChild() {
   }
 
   function validateForm() {
+    // Valida campos antes de invocar al servicio.
     const newErrors = {};
 
     if (!formData.username.trim()) {
@@ -49,6 +53,7 @@ function LoginChild() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Ejecuta validaciones y detiene envio si hay errores.
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage("");
@@ -60,8 +65,10 @@ function LoginChild() {
     try {
       setLoading(true);
 
+      // Autentica al hijo por username + PIN.
       const child = await loginChild(formData.username.trim(), formData.pin);
 
+      // Guarda sesion local para acceso a rutas protegidas.
       saveUserSession({
         role: "child",
         id: child.id,
@@ -75,6 +82,7 @@ function LoginChild() {
         `Inicio de sesión exitoso. Bienvenido, ${child.first_name}.`
       );
 
+      // Muestra confirmacion breve y redirige.
       setTimeout(() => {
         navigate("/child-home");
       }, 1000);
@@ -83,6 +91,7 @@ function LoginChild() {
     } catch (error) {
       console.error(error);
 
+      // Mapea codigos de error a mensajes de pantalla.
       if (error.message === "CHILD_NOT_FOUND") {
         setErrors({
           username: "Ese usuario no está registrado.",

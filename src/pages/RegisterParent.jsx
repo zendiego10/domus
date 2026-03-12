@@ -13,6 +13,7 @@ import {
 import { registerParent } from "../services/parentService";
 
 function RegisterParent() {
+  // Estado principal del formulario de registro de padre/madre.
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -26,11 +27,13 @@ function RegisterParent() {
     acceptedMarketing: false,
   });
 
+  // Manejo de errores por campo, confirmacion y loading.
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
+    // Soporta inputs de texto y checkboxes en un unico handler.
     const { name, value, type, checked } = event.target;
 
     setFormData((prev) => ({
@@ -40,6 +43,7 @@ function RegisterParent() {
   }
 
   function validateForm() {
+    // Ejecuta todas las reglas de negocio de registro.
     const newErrors = {};
 
     if (!formData.firstName.trim()) newErrors.firstName = "Ingresa el nombre.";
@@ -61,6 +65,7 @@ function RegisterParent() {
     if (!formData.birthDate) {
       newErrors.birthDate = "Selecciona la fecha de nacimiento.";
     } else {
+      // Calcula edad para validar mayoria de edad.
       const age = calculateAge(formData.birthDate);
       if (!isAdult(age)) {
         newErrors.birthDate = "Debes ser mayor de edad para registrarte.";
@@ -89,6 +94,7 @@ function RegisterParent() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Valida, muestra errores y evita envio si hay fallos.
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage("");
@@ -98,6 +104,7 @@ function RegisterParent() {
     try {
       setLoading(true);
 
+      // Crea el registro en backend y recibe codigo familiar generado.
       const savedParent = await registerParent(formData);
 
       setSuccessMessage(
@@ -121,6 +128,7 @@ function RegisterParent() {
     } catch (error) {
       console.error(error);
 
+      // Interpreta errores de constraints unicas de Supabase.
       const message = error?.message || "";
 
       if (message.includes("parents_username_key")) {

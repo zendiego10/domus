@@ -5,15 +5,18 @@ import Button from "../components/Button";
 
 function ChildHome() {
   const navigate = useNavigate();
+  // Lee sesion local para mostrar datos del hijo autenticado.
   const user = getUserSession();
 
   useEffect(() => {
+    // Defensa adicional: bloquea acceso si la sesion no es de hijo.
     if (!user || user.role !== "child") {
       navigate("/login-child");
     }
   }, [user, navigate]);
 
   function handleLogout() {
+    // Cierra sesion local y retorna al login de hijo.
     clearUserSession();
     navigate("/login-child");
   }

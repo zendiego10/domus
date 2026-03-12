@@ -9,6 +9,7 @@ import { registerChild } from "../services/childService";
 
 
 function RegisterChild() {
+  // Estado del formulario para crear un hijo asociado a un codigo familiar.
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -19,11 +20,13 @@ function RegisterChild() {
     confirmPin: "",
   });
 
+  // Errores de validacion/servicio, feedback de exito y estado de carga.
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
   function handleChange(event) {
+    // Actualiza el estado con el valor del input cambiado.
     const { name, value } = event.target;
 
     setFormData((prev) => ({
@@ -33,6 +36,7 @@ function RegisterChild() {
   }
 
   function validateForm() {
+    // Valida datos obligatorios y formato del PIN/codigo familiar.
     const newErrors = {};
 
     if (!formData.firstName.trim()) {
@@ -75,6 +79,7 @@ function RegisterChild() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // Ejecuta validaciones locales antes de enviar al backend.
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage("");
@@ -84,6 +89,7 @@ function RegisterChild() {
     try {
       setLoading(true);
 
+      // Registra al hijo y lo enlaza con el padre por familyCode.
       const savedChild = await registerChild(formData);
 
       setSuccessMessage(
@@ -104,6 +110,7 @@ function RegisterChild() {
     } catch (error) {
       console.error(error);
 
+      // Traduce errores de backend a mensajes legibles.
       const message = error?.message || "";
 
       if (message.includes("JSON object requested, multiple (or no) rows returned")) {

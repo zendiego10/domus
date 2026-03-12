@@ -5,15 +5,18 @@ import Button from "../components/Button";
 
 function ParentHome() {
   const navigate = useNavigate();
+  // Lee sesion local para mostrar datos del padre autenticado.
   const user = getUserSession();
 
   useEffect(() => {
+    // Defensa adicional: si no hay sesion valida, vuelve al login.
     if (!user || user.role !== "parent") {
       navigate("/login-parent");
     }
   }, [user, navigate]);
 
   function handleLogout() {
+    // Cierra sesion local y regresa al login del rol.
     clearUserSession();
     navigate("/login-parent");
   }
