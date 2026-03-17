@@ -152,7 +152,7 @@ function RegisterParent() {
     >
       <form onSubmit={handleSubmit}>
         <InputField
-          label="Nombre"
+          label="Nombre *"
           name="firstName"
           value={formData.firstName}
           onChange={handleChange}
@@ -161,7 +161,7 @@ function RegisterParent() {
         {errors.firstName && <p className="error-text">{errors.firstName}</p>}
 
         <InputField
-          label="Apellido"
+          label="Apellido *"
           name="lastName"
           value={formData.lastName}
           onChange={handleChange}
@@ -170,7 +170,7 @@ function RegisterParent() {
         {errors.lastName && <p className="error-text">{errors.lastName}</p>}
 
         <InputField
-          label="Nombre de usuario"
+          label="Nombre de usuario *"
           name="username"
           value={formData.username}
           onChange={handleChange}
@@ -179,7 +179,7 @@ function RegisterParent() {
         {errors.username && <p className="error-text">{errors.username}</p>}
 
         <InputField
-          label="Correo electrónico"
+          label="Correo electrónico *"
           type="email"
           name="email"
           value={formData.email}
@@ -189,7 +189,7 @@ function RegisterParent() {
         {errors.email && <p className="error-text">{errors.email}</p>}
 
         <InputField
-          label="Teléfono"
+          label="Teléfono *"
           name="phone"
           value={formData.phone}
           onChange={handleChange}
@@ -198,7 +198,7 @@ function RegisterParent() {
         {errors.phone && <p className="error-text">{errors.phone}</p>}
 
         <InputField
-          label="Fecha de nacimiento"
+          label="Fecha de nacimiento (Debes ser mayor de 18 años)*"
           type="date"
           name="birthDate"
           value={formData.birthDate}
@@ -207,7 +207,7 @@ function RegisterParent() {
         {errors.birthDate && <p className="error-text">{errors.birthDate}</p>}
 
         <InputField
-          label="Contraseña"
+          label="Contraseña *"
           type="password"
           name="password"
           value={formData.password}
@@ -237,7 +237,7 @@ function RegisterParent() {
             onChange={handleChange}
           />
           <label htmlFor="acceptedTerms">
-            Acepto los términos y condiciones
+            Acepto los términos y condiciones *
           </label>
         </div>
         {errors.acceptedTerms && (
@@ -253,7 +253,7 @@ function RegisterParent() {
             onChange={handleChange}
           />
           <label htmlFor="acceptedMarketing">
-            Acepto recibir información por los canales registrados
+            Acepto recibir información por los canales registrados (Opcional)*
           </label>
         </div>
 
