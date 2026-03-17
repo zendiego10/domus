@@ -1,0 +1,239 @@
+/* ─── Navbar ─── */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+}
+
+.navbar-inner {
+  max-width: 1200px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ─── Brand (Logo + Title) ─── */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.navbar-brand:hover {
+  opacity: 0.85;
+}
+
+.navbar-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.navbar-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #9420D4;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+
+.navbar-subtitle {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Module Tabs ─── */
+.navbar-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.navbar-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.navbar-tab:hover {
+  color: #9420D4;
+  background: rgba(148, 32, 212, 0.05);
+}
+
+.navbar-tab.active {
+  background: #9420D4;
+  color: #ffffff;
+  border-color: #9420D4;
+  font-weight: 600;
+}
+
+.navbar-tab-icon {
+  font-size: 15px;
+}
+
+/* ─── User Area ─── */
+.navbar-user {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.navbar-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.navbar-avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 3px 12px rgba(148, 32, 212, 0.35);
+}
+
+.navbar-avatar:active {
+  transform: scale(0.95);
+}
+
+/* ─── Dropdown Menu ─── */
+.navbar-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  padding: 8px 0;
+  animation: dropdownSlide 0.2s ease;
+  z-index: 1001;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Dropdown Header ─── */
+.navbar-dropdown-header {
+  padding: 12px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navbar-dropdown-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+}
+
+.navbar-dropdown-role {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* ─── Dropdown Divider ─── */
+.navbar-dropdown-divider {
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  margin: 4px 12px;
+}
+
+/* ─── Dropdown Items ─── */
+.navbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  text-align: left;
+}
+
+.navbar-dropdown-item:hover {
+  background-color: #f9f5ff;
+  color: #9420D4;
+}
+
+.navbar-dropdown-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* ─── Logout Item ─── */
+.navbar-dropdown-logout {
+  color: #dc2626;
+}
+
+.navbar-dropdown-logout:hover {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ─── Responsive Tabs ─── */
+@media (max-width: 768px) {
+  .navbar-tabs {
+    gap: 2px;
+  }
+  .navbar-tab {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .navbar-tab-icon {
+    display: none;
+  }
+}

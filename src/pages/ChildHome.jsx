@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearUserSession, getUserSession } from "../utils/auth";
-import Button from "../components/Button";
+import { getUserSession } from "../utils/auth";
 
 function ChildHome() {
   const navigate = useNavigate();
@@ -15,12 +14,6 @@ function ChildHome() {
     }
   }, [user, navigate]);
 
-  function handleLogout() {
-    // Cierra sesion local y retorna al login de hijo.
-    clearUserSession();
-    navigate("/login-child");
-  }
-
   if (!user) return null;
 
   return (
@@ -29,7 +22,6 @@ function ChildHome() {
         <h1>Bienvenido, {user.firstName}</h1>
         <p className="subtitle">Has iniciado sesión como hijo.</p>
         <p><strong>Usuario:</strong> {user.username}</p>
-        <Button text="Cerrar sesión" type="button" onClick={handleLogout} />
       </div>
     </div>
   );
