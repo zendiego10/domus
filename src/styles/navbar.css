@@ -224,16 +224,262 @@
   color: #b91c1c;
 }
 
-/* ─── Responsive Tabs ─── */
+/* ══════════════════════════════════════════════
+   PARENT NAVBAR — Hamburger & Mobile Layout
+   ══════════════════════════════════════════════ */
+
+/* ─── Boton hamburguesa del padre (oculto en desktop) ─── */
+.parent-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.parent-hamburger:hover {
+  background: rgba(148, 32, 212, 0.07);
+}
+
+.parent-hamburger-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #374151;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Animacion a X cuando el menu esta abierto */
+.parent-hamburger.open .parent-hamburger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.parent-hamburger.open .parent-hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+.parent-hamburger.open .parent-hamburger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ─── Overlay movil del padre ─── */
+.parent-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  top: 60px;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 998;
+}
+
+/* ─── Menu movil desplegable del padre ─── */
+.parent-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  padding: 12px 16px 16px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.parent-mobile-menu.open {
+  display: flex;
+  animation: parentMenuSlide 0.22s ease;
+}
+
+@keyframes parentMenuSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tabs dentro del menu movil del padre */
+.parent-mobile-menu .navbar-tab {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.parent-mobile-menu .navbar-tab-icon {
+  display: inline;
+}
+
+/* ─── Parent Navbar Mobile Layout (3-column grid) ─── */
 @media (max-width: 768px) {
-  .navbar-tabs {
-    gap: 2px;
-  }
-  .navbar-tab {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-  .navbar-tab-icon {
+  /* Ocultar tabs del padre en movil, mostrar hamburguesa */
+  .parent-navbar-tabs {
     display: none;
+  }
+
+  .parent-hamburger {
+    display: flex;
+  }
+
+  /* Ocultar subtitulo en movil para ahorrar espacio */
+  .parent-navbar-inner .navbar-subtitle {
+    display: none;
+  }
+
+  /* Grid de 3 columnas: hamburguesa | logo centrado | avatar */
+  .parent-navbar-inner {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .parent-navbar-inner .parent-hamburger {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .parent-navbar-inner .parent-navbar-brand {
+    grid-column: 2;
+    justify-content: center;
+  }
+
+  .parent-navbar-inner .navbar-user {
+    grid-column: 3;
+    justify-self: end;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   CHILD NAVBAR — Hamburger & Mobile Layout
+   ══════════════════════════════════════════════ */
+
+/* ─── Hamburger Button ─── */
+.child-hamburger {
+  display: none; /* oculto en desktop */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.child-hamburger:hover {
+  background: rgba(148, 32, 212, 0.07);
+}
+
+.child-hamburger-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #374151;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Animacion a X cuando el menu esta abierto */
+.child-hamburger.open .child-hamburger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.child-hamburger.open .child-hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+.child-hamburger.open .child-hamburger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ─── Mobile Overlay ─── */
+.child-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  top: 60px;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 998;
+}
+
+/* ─── Mobile Slide-Down Menu ─── */
+.child-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  padding: 12px 16px 16px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.child-mobile-menu.open {
+  display: flex;
+  animation: childMenuSlide 0.22s ease;
+}
+
+@keyframes childMenuSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.child-mobile-menu .navbar-tab {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.child-mobile-menu .navbar-tab-icon {
+  display: inline; /* siempre visible en el menu movil */
+}
+
+/* ─── Child Navbar Mobile Layout (3-column grid) ─── */
+@media (max-width: 768px) {
+  /* Ocultar tabs del hijo en movil, mostrar hamburger */
+  .child-navbar-tabs {
+    display: none;
+  }
+
+  .child-hamburger {
+    display: flex;
+  }
+
+  /* Grid de 3 columnas: hamburger | logo centrado | avatar */
+  .child-navbar-inner {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .child-navbar-inner .child-hamburger {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .child-navbar-inner .child-navbar-brand {
+    grid-column: 2;
+    justify-content: center;
+  }
+
+  .child-navbar-inner .navbar-user {
+    grid-column: 3;
+    justify-self: end;
   }
 }

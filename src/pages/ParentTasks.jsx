@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
-import { getTasksByParent, createTask, completeTask } from "../services/taskService";
+import { getTasksByParent, createTask, completeTask, uncompleteTask } from "../services/taskService";
 import { getChildrenByParent } from "../services/dashboardService";
 
 const CHILD_COLORS = ["pink", "teal", "yellow", "purple"];
@@ -24,6 +24,7 @@ function ParentTasks() {
     category: "",
     points: "",
     description: "",
+    dueDate: "",
   });
 
   useEffect(() => {
@@ -76,10 +77,11 @@ function ParentTasks() {
         description: formData.description,
         category: formData.category,
         points: parseInt(formData.points),
+        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
       });
 
       setTasks((prev) => [newTask, ...prev]);
-      setFormData({ title: "", childId: "", category: "", points: "", description: "" });
+      setFormData({ title: "", childId: "", category: "", points: "", description: "", dueDate: "" });
       setShowForm(false);
     } catch (error) {
       console.error("Error creando tarea:", error);
@@ -90,10 +92,21 @@ function ParentTasks() {
   async function handleComplete(task) {
     try {
       await completeTask(task);
-      // Reload para reflejar cambios.
+      // Recarga para reflejar cambios.
       await loadData();
     } catch (error) {
       console.error("Error completando tarea:", error);
+    }
+  }
+
+  // Desmarca una tarea completada y la devuelve a pendiente.
+  async function handleUncomplete(task) {
+    try {
+      await uncompleteTask(task);
+      // Recarga para reflejar cambios.
+      await loadData();
+    } catch (error) {
+      console.error("Error desmarcando tarea:", error);
     }
   }
 
@@ -112,6 +125,25 @@ function ParentTasks() {
   function formatDate(dateStr) {
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleDateString("es", { day: "numeric", month: "numeric", year: "numeric" });
+  }
+
+  // Formatea fecha y hora para mostrar el deadline completo.
+  function formatDateTime(dateStr) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleString("es", {
+      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  // Determina si la tarea fue completada a tiempo o tarde.
+  function getDeliveryStatus(task) {
+    if (!task.due_date || !task.completed_at) return null;
+    const due = new Date(task.due_date);
+    const completed = new Date(task.completed_at);
+    if (completed <= due) {
+      return { label: "A tiempo", className: "task-ontime" };
+    }
+    return { label: "Entregada tarde", className: "task-late" };
   }
 
   if (!user) return null;
@@ -179,6 +211,16 @@ function ParentTasks() {
                 onChange={(e) => setFormData({ ...formData, points: e.target.value })}
                 required
               />
+              {/* Campo de fecha y hora limite para la tarea */}
+              <div className="add-task-field">
+                <label className="add-task-label">Fecha y hora límite (opcional)</label>
+                <input
+                  className="add-task-input"
+                  type="datetime-local"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                />
+              </div>
               <textarea
                 className="add-task-textarea full-width"
                 placeholder="Descripción"
@@ -292,7 +334,9 @@ function ParentTasks() {
                       <span className={`task-badge ${task.category}`}>
                         {task.category === "academica" ? "Académica" : "Doméstica"}
                       </span>
-                      <span className="task-date">📅 {formatDate(task.due_date)}</span>
+                      {task.due_date && (
+                        <span className="task-date">📅 {formatDateTime(task.due_date)}</span>
+                      )}
                     </div>
                   </div>
                   <span className="task-points">+{task.points}</span>
@@ -317,7 +361,13 @@ function ParentTasks() {
               return (
                 <div className="task-card" key={task.id}>
                   <div className="task-check">
-                    <div className="task-check-done">✓</div>
+                    <button
+                      className="task-check-done task-check-undo"
+                      onClick={() => handleUncomplete(task)}
+                      title="Desmarcar tarea"
+                    >
+                      ✓
+                    </button>
                   </div>
                   <div className="task-content">
                     <h3>{task.title}</h3>
@@ -338,6 +388,15 @@ function ParentTasks() {
                         {task.category === "academica" ? "Académica" : "Doméstica"}
                       </span>
                       <span className="task-date">✅ {formatDate(task.completed_at)}</span>
+                      {/* Indicador de si fue a tiempo o tarde */}
+                      {(() => {
+                        const status = getDeliveryStatus(task);
+                        return status ? (
+                          <span className={`task-delivery ${status.className}`}>
+                            {status.label}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <span className="task-points">+{task.points}</span>

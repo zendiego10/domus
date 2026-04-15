@@ -530,9 +530,10 @@
 }
 
 .task-content p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 13px;
   color: #6b7280;
+  line-height: 1.4;
 }
 
 .task-meta {
@@ -936,6 +937,27 @@
   }
 }
 
+/* ─── Responsive para header de tareas del padre ─── */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-title {
+    font-size: 22px;
+  }
+  .dashboard-subtitle {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .btn-add-task {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+}
+
 @media (max-width: 600px) {
   .stat-cards,
   .children-grid,
@@ -954,4 +976,316 @@
     gap: 16px;
     align-items: stretch;
   }
+}
+
+/* ══════════════════════════════════════════════
+   CHILD DASHBOARD — Estilos específicos del hijo
+   ══════════════════════════════════════════════ */
+
+/* ─── Header con saludo y level badge ─── */
+.child-dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.child-level-badge {
+  padding: 8px 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: center;
+}
+
+/* ─── Pill de puntos en ChildTasks ─── */
+.child-points-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 24px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1.5px solid #eab308;
+  font-size: 15px;
+  font-weight: 600;
+  color: #92400e;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.child-points-pill-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #eab308;
+}
+
+/* ─── Barra de progreso del hijo ─── */
+.child-progress-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f5;
+  margin-bottom: 32px;
+}
+
+.child-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.child-progress-percent {
+  font-size: 22px;
+  font-weight: 700;
+  color: #9420D4;
+}
+
+/* ─── Bloque de sección (tareas / recompensas) ─── */
+.child-section-block {
+  margin-bottom: 40px;
+}
+
+/* ─── Estado vacío del hijo ─── */
+.child-empty-state {
+  background: #f9fafb;
+  border: 1.5px dashed #d1d5db;
+  border-radius: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+/* ─── Botón de acción rápida (outline purple) ─── */
+.btn-quick-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 24px;
+  border: 2px solid #9420D4;
+  background: transparent;
+  color: #9420D4;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-quick-action:hover {
+  background: #9420D4;
+  color: #ffffff;
+}
+
+/* ─── Layout derecho en tarjeta de tarea del hijo ─── */
+.task-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Botón completar tarea ─── */
+.btn-complete-task {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.btn-complete-task:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-complete-task:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Indicadores de entrega a tiempo / tarde ─── */
+.task-delivery {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.task-ontime {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.task-late {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+/* ─── Indicador de tarea vencida o por vencer ─── */
+.task-overdue {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.task-due-soon {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+/* ─── Campo de fecha con label en formulario ─── */
+.add-task-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-task-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* ─── Boton para desmarcar tarea completada ─── */
+.task-check-undo {
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.task-check-undo:hover {
+  background: #f59e0b !important;
+  transform: scale(1.1);
+}
+
+.task-check-undo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Toast con puntos negativos ─── */
+.toast-points-negative {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* ─── Hero de puntos en ChildRewards ─── */
+.child-points-hero {
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  border-radius: 18px;
+  padding: 36px 24px;
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 36px;
+  box-shadow: 0 8px 28px rgba(148, 32, 212, 0.28);
+}
+
+.child-points-hero-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.child-points-hero-value {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.child-points-hero-label {
+  font-size: 16px;
+  opacity: 0.88;
+  font-weight: 500;
+}
+
+/* ─── Puntos faltantes en reward card ─── */
+.reward-missing {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+/* ─── Toast de notificación ─── */
+.child-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #ffffff;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  z-index: 2000;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  animation: toastIn 0.25s ease;
+}
+
+.toast-points {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(14px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ─── Responsive del hijo ─── */
+@media (max-width: 768px) {
+  .child-points-hero-value { font-size: 48px; }
+  .child-points-hero { padding: 28px 20px; }
+  .child-level-badge { font-size: 13px; padding: 6px 16px; }
+}
+
+@media (max-width: 600px) {
+  .child-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .child-toast {
+    left: 16px;
+    right: 16px;
+    transform: none;
+    white-space: normal;
+    text-align: center;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .task-right {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .child-points-hero-value { font-size: 40px; }
 }

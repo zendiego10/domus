@@ -65,3 +65,51 @@ export async function loginChild(username, pin) {
 
   return data;
 }
+
+// Obtiene todas las tareas asignadas al hijo, ordenadas por fecha de creacion.
+export async function getTasksByChild(childId) {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("child_id", childId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Obtiene las ultimas N tareas del hijo para el preview del dashboard.
+export async function getRecentTasksByChild(childId, limit = 5) {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("child_id", childId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Obtiene el historial de canjes del hijo con datos de la recompensa canjeada.
+export async function getRedemptionsByChild(childId) {
+  const { data, error } = await supabase
+    .from("redemptions")
+    .select("*, rewards(title, icon, points_cost)")
+    .eq("child_id", childId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Obtiene solo el conteo de canjes del hijo (sin traer filas completas).
+export async function getRedemptionCount(childId) {
+  const { count, error } = await supabase
+    .from("redemptions")
+    .select("*", { count: "exact", head: true })
+    .eq("child_id", childId);
+
+  if (error) throw error;
+  return count || 0;
+}

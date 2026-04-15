@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import LoginParent from "./pages/LoginParent";
 import RegisterParent from "./pages/RegisterParent";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -8,14 +8,24 @@ import ParentHome from "./pages/ParentHome";
 import ParentTasks from "./pages/ParentTasks";
 import ParentRewards from "./pages/ParentRewards";
 import ChildHome from "./pages/ChildHome";
+import ChildTasks from "./pages/ChildTasks";
+import ChildRewards from "./pages/ChildRewards";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import ChildNavbar from "./components/ChildNavbar";
+
+// Muestra la navbar correcta segun si la ruta pertenece al hijo o al padre.
+function NavbarRouter() {
+  const location = useLocation();
+  const isChildRoute = location.pathname.startsWith("/child-");
+  return isChildRoute ? <ChildNavbar /> : <Navbar />;
+}
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Barra de navegacion persistente en todas las paginas. */}
-      <Navbar />
+      {/* Navbar adaptable: ChildNavbar en rutas /child-*, Navbar en el resto. */}
+      <NavbarRouter />
       {/* Define todas las rutas de la app y redirige la raiz al login de padres. */}
       <Routes>
         <Route path="/" element={<Navigate to="/login-parent" replace />} />
@@ -24,6 +34,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register-child" element={<RegisterChild />} />
         <Route path="/login-child" element={<LoginChild />} />
+
         {/* Zona protegida para cuentas con rol padre/madre. */}
         <Route
           path="/parent-home"
@@ -56,6 +67,22 @@ function App() {
           element={
             <ProtectedRoute role="child">
               <ChildHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/child-tasks"
+          element={
+            <ProtectedRoute role="child">
+              <ChildTasks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/child-rewards"
+          element={
+            <ProtectedRoute role="child">
+              <ChildRewards />
             </ProtectedRoute>
           }
         />
