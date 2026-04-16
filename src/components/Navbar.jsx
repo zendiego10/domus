@@ -122,7 +122,7 @@ function Navbar() {
                     </span>
                   </div>
                   <hr className="navbar-dropdown-divider" />
-                  <button className="navbar-dropdown-item" onClick={() => setMenuOpen(false)}>
+                  <button className="navbar-dropdown-item" onClick={() => { navigate("/parent-profile"); setMenuOpen(false); }}>
                     <span className="navbar-dropdown-icon">👤</span>
                     Mi cuenta
                   </button>

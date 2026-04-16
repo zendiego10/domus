@@ -1289,3 +1289,556 @@
   }
   .child-points-hero-value { font-size: 40px; }
 }
+
+/* ─── Profile Page ─── */
+.profile-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f5;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.profile-username,
+.profile-email {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.profile-role-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ede9fe;
+  color: #7c3aed;
+  width: fit-content;
+}
+
+.profile-role-badge.child {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 32px 0 16px;
+}
+
+.children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.child-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f5;
+}
+
+.child-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.child-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.child-avatar.pink {
+  background: linear-gradient(135deg, #ec4899, #f472b6);
+}
+
+.child-avatar.teal {
+  background: linear-gradient(135deg, #14b8a6, #5eead4);
+}
+
+.child-avatar.yellow {
+  background: linear-gradient(135deg, #eab308, #fbbf24);
+}
+
+.child-avatar.purple {
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+}
+
+.child-card-name {
+  flex: 1;
+}
+
+.child-card-name h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+.child-card-name span {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ─── Progress bar styling ─── */
+.progress-bar {
+  background: #f0f0f5;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.purple {
+  background: linear-gradient(90deg, #9420D4, #c084fc);
+}
+
+.progress-fill.green {
+  background: #22c55e;
+}
+
+.progress-fill.blue {
+  background: #0ea5e9;
+}
+
+@media (max-width: 768px) {
+  .profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .children-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-name {
+    font-size: 20px;
+  }
+}
+
+/* ─── Modal overlay ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ─── Form fields in modal ─── */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #9420D4;
+  box-shadow: 0 0 0 3px rgba(148, 32, 212, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ─── Icon selector ─── */
+.icon-selector {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.icon-option {
+  width: 42px;
+  height: 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.icon-option:hover {
+  border-color: #9420D4;
+}
+
+.icon-option.selected {
+  border-color: #9420D4;
+  background: #f5e6ff;
+}
+
+/* ─── Reward badges ─── */
+.reward-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.reward-badge.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.reward-badge.expired {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.reward-card.expired-card {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ─── Reward delete button ─── */
+.reward-card {
+  position: relative;
+}
+
+.btn-reward-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.btn-reward-delete:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+/* ─── Request section ─── */
+.requests-section {
+  margin-bottom: 28px;
+}
+
+.requests-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.requests-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.requests-badge {
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.request-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.request-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.request-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.request-reward-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.request-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.request-cost {
+  background: #fef9c3;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-approve {
+  background: #dcfce7;
+  color: #16a34a;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-approve:hover {
+  background: #bbf7d0;
+}
+
+.btn-reject {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-reject:hover {
+  background: #fecaca;
+}
+
+/* ─── Affordability indicators ─── */
+.reward-can-afford {
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 6px 0;
+}
+
+.reward-cannot-afford {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 6px 0;
+}
+
+.btn-requested {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* ─── Toast mejorado ─── */
+.toast-success {
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+}
+
+.toast-error {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.toast-info {
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+}
+
+/* ─── Responsive modal ─── */
+@media (max-width: 600px) {
+  .modal-box {
+    padding: 20px;
+  }
+
+  .icon-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .request-card {
+    flex-wrap: wrap;
+  }
+
+  .request-actions {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .btn-approve,
+  .btn-reject {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* ─── Child selector in reward form ─── */
+.child-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1f2937;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: auto;
+}
+
+.child-select:focus {
+  outline: none;
+  border-color: #9420D4;
+  box-shadow: 0 0 0 3px rgba(148, 32, 212, 0.1);
+}
+
+/* ─── Reward target badges ─── */
+.reward-badges-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.reward-badge.child-target {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.reward-badge.all-children {
+  background: #dbeafe;
+  color: #2563eb;
+}

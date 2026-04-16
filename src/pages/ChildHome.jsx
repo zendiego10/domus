@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
 import { getChildPoints, getChildProgress } from "../services/dashboardService";
 import { getRecentTasksByChild, getRedemptionCount } from "../services/childService";
-import { getRewardsByParent } from "../services/rewardService";
+import { getRewardsForChild } from "../services/rewardService";
 
 // Calcula el nivel del hijo segun sus puntos acumulados.
 function getLevel(pts) {
@@ -64,19 +64,26 @@ function ChildHome() {
 
   async function loadDashboard() {
     try {
-      const [pts, prog, tasks, rewards, redCount] = await Promise.all([
+      // Datos principales — no deben fallar por problemas del sistema de recompensas.
+      const [pts, prog, tasks, redCount] = await Promise.all([
         getChildPoints(user.id),
         getChildProgress(user.id),
         getRecentTasksByChild(user.id, 5),
-        getRewardsByParent(user.parentId),
         getRedemptionCount(user.id),
       ]);
 
       setPoints(pts);
       setProgress(prog);
       setRecentTasks(tasks);
-      setAffordableRewards(rewards.filter((r) => r.points_cost <= pts).slice(0, 3));
       setRedemptionCount(redCount);
+
+      // Recompensas — bloque separado para no bloquear el resto si falla.
+      try {
+        const rewards = await getRewardsForChild(user.parentId, user.id);
+        setAffordableRewards(rewards.filter((r) => r.points_cost <= pts).slice(0, 3));
+      } catch (err) {
+        console.warn("Error cargando recompensas en home:", err.message);
+      }
     } catch (err) {
       console.error("Error cargando dashboard del hijo:", err);
     } finally {

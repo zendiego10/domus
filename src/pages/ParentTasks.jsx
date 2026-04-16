@@ -55,7 +55,7 @@ function ParentTasks() {
   function getFilteredTasks() {
     return tasks.filter((task) => {
       if (filterType !== "todas" && task.category !== filterType) return false;
-      if (filterChild !== "todos" && task.child_id !== filterChild) return false;
+      if (filterChild !== "todos" && String(task.child_id) !== String(filterChild)) return false;
       return true;
     });
   }

@@ -114,7 +114,7 @@ function ChildNavbar() {
                   <hr className="navbar-dropdown-divider" />
                   <button
                     className="navbar-dropdown-item"
-                    onClick={() => setDropdownOpen(false)}
+                    onClick={() => { navigate("/child-profile"); setDropdownOpen(false); }}
                   >
                     <span className="navbar-dropdown-icon">👤</span>
                     Mi cuenta

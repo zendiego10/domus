@@ -1,15 +1,30 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
-import { getRewardsByParent, redeemReward } from "../services/rewardService";
+import {
+  getRewardsByParent,
+  createReward,
+  deleteReward,
+  getPendingRequests,
+  approveRequest,
+  rejectRequest,
+} from "../services/rewardService";
 import { getChildrenByParent, getChildPoints } from "../services/dashboardService";
 
 const CHILD_COLORS = ["pink", "teal", "yellow", "purple"];
-
-// Iconos predefinidos para las recompensas.
 const REWARD_ICONS = {
-  "📺": "📺", "🎬": "🎬", "🍕": "🍕", "🌙": "🌙", "👫": "👫", "📖": "📖",
-  "🎮": "🎮", "🎁": "🎁", "🍦": "🍦", "🎪": "🎪", "🎵": "🎵", "⚽": "⚽",
+  "📺": "📺",
+  "🎬": "🎬",
+  "🍕": "🍕",
+  "🌙": "🌙",
+  "👫": "👫",
+  "📖": "📖",
+  "🎮": "🎮",
+  "🎁": "🎁",
+  "🍦": "🍦",
+  "🎪": "🎪",
+  "🎵": "🎵",
+  "⚽": "⚽",
 };
 
 function ParentRewards() {
@@ -19,8 +34,19 @@ function ParentRewards() {
   const [rewards, setRewards] = useState([]);
   const [children, setChildren] = useState([]);
   const [childPoints, setChildPoints] = useState({});
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterChild, setFilterChild] = useState("todos");
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [form, setForm] = useState({
+    title: "",
+    pointsCost: 100,
+    icon: "🎁",
+    expiresAt: "",
+    description: "",
+    childId: "",
+  });
 
   useEffect(() => {
     if (!user || user.role !== "parent") {
@@ -33,67 +59,124 @@ function ParentRewards() {
   async function loadData() {
     try {
       setLoading(true);
+
       const [rewardsData, childrenData] = await Promise.all([
         getRewardsByParent(user.id),
         getChildrenByParent(user.id),
       ]);
+
+      // Cargar solicitudes pendientes (resiliente si la tabla no existe)
+      let requestsData = [];
+      try {
+        requestsData = await getPendingRequests(user.id);
+      } catch (err) {
+        console.warn("No se pudieron cargar solicitudes pendientes:", err.message);
+      }
+
       setRewards(rewardsData);
       setChildren(childrenData);
+      setPendingRequests(requestsData);
 
-      // Calcula los puntos de cada hijo.
+      // Cargar puntos de cada hijo
       const pointsMap = {};
       for (const child of childrenData) {
         pointsMap[child.id] = await getChildPoints(child.id);
       }
       setChildPoints(pointsMap);
     } catch (error) {
-      console.error("Error cargando recompensas:", error);
+      console.error("Error cargando datos:", error);
+      showToast("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
   }
 
-  // Canjea una recompensa para un hijo seleccionado.
-  async function handleRedeem(reward) {
-    // Si solo hay un hijo, canjear directamente.
-    // Si hay varios, pedir seleccion.
-    let selectedChildId;
+  function showToast(msg, type = "success") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  }
 
-    if (children.length === 1) {
-      selectedChildId = children[0].id;
-    } else {
-      // Mostrar un prompt basico para seleccionar hijo.
-      const childNames = children.map((c, i) => `${i + 1}. ${c.first_name}`).join("\n");
-      const choice = prompt(
-        `¿Para quién deseas canjear "${reward.title}" (${reward.points_cost} pts)?\n\n${childNames}\n\nIngresa el número:`
-      );
-
-      if (!choice) return;
-      const idx = parseInt(choice) - 1;
-      if (idx < 0 || idx >= children.length) {
-        alert("Selección inválida.");
-        return;
-      }
-      selectedChildId = children[idx].id;
+  async function handleCreateReward() {
+    if (!form.title.trim()) {
+      showToast("El nombre de la recompensa es obligatorio", "error");
+      return;
     }
-
-    const currentPoints = childPoints[selectedChildId] || 0;
-    if (currentPoints < reward.points_cost) {
-      alert("Puntos insuficientes para canjear esta recompensa.");
+    if (form.pointsCost < 1) {
+      showToast("Los puntos deben ser mayor a 0", "error");
       return;
     }
 
+    setSubmitting(true);
     try {
-      await redeemReward(reward.id, selectedChildId, reward.points_cost, user.id, reward.title);
-      alert("¡Recompensa canjeada exitosamente!");
+      await createReward({
+        parentId: user.id,
+        title: form.title,
+        pointsCost: parseInt(form.pointsCost),
+        icon: form.icon,
+        expiresAt: form.expiresAt || null,
+        description: form.description,
+        childId: form.childId || null,
+      });
+
+      showToast("Recompensa creada exitosamente!", "success");
+      setForm({ title: "", pointsCost: 100, icon: "🎁", expiresAt: "", description: "", childId: "" });
+      setShowForm(false);
+      await loadData();
+    } catch (error) {
+      console.error("Error creando recompensa:", error);
+      showToast("Error al crear la recompensa", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(rewardId) {
+    if (!window.confirm("Estas seguro de que deseas eliminar esta recompensa?")) return;
+
+    try {
+      await deleteReward(rewardId);
+      showToast("Recompensa eliminada", "success");
+      await loadData();
+    } catch (error) {
+      console.error("Error eliminando recompensa:", error);
+      showToast("Error al eliminar la recompensa", "error");
+    }
+  }
+
+  async function handleApprove(request) {
+    try {
+      const { rewards: rewardData } = request;
+      await approveRequest(
+        request.id,
+        request.child_id,
+        rewardData.points_cost,
+        user.id,
+        rewardData.title,
+        rewardData.id
+      );
+
+      showToast(`Solicitud aprobada para ${request.children.first_name}`, "success");
       await loadData();
     } catch (error) {
       if (error.message === "INSUFFICIENT_POINTS") {
-        alert("Puntos insuficientes para canjear esta recompensa.");
+        showToast("El hijo no tiene suficientes puntos", "error");
       } else {
-        console.error("Error canjeando recompensa:", error);
-        alert("Error al canjear la recompensa.");
+        console.error("Error aprobando solicitud:", error);
+        showToast("Error al aprobar la solicitud", "error");
       }
+    }
+  }
+
+  async function handleReject(request) {
+    if (!window.confirm("Rechazar esta solicitud?")) return;
+
+    try {
+      await rejectRequest(request.id);
+      showToast("Solicitud rechazada", "info");
+      await loadData();
+    } catch (error) {
+      console.error("Error rechazando solicitud:", error);
+      showToast("Error al rechazar la solicitud", "error");
     }
   }
 
@@ -107,14 +190,25 @@ function ParentRewards() {
     return CHILD_COLORS[index % CHILD_COLORS.length];
   }
 
-  // Filtra hijos que pueden canjear una recompensa (tienen suficientes puntos).
-  function getEligibleChildren(reward) {
-    if (filterChild !== "todos") {
-      const child = children.find((c) => c.id === filterChild);
-      if (child && (childPoints[child.id] || 0) >= reward.points_cost) return [child];
-      return [];
-    }
-    return children.filter((c) => (childPoints[c.id] || 0) >= reward.points_cost);
+  function getChildNameById(childId) {
+    const child = children.find((c) => c.id === childId);
+    return child ? child.first_name : "";
+  }
+
+  function isExpired(reward) {
+    return reward.expires_at && new Date(reward.expires_at) < new Date();
+  }
+
+  function formatTimeAgo(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
+    const secondsAgo = Math.floor((now - date) / 1000);
+
+    if (secondsAgo < 60) return "hace unos segundos";
+    if (secondsAgo < 3600) return `hace ${Math.floor(secondsAgo / 60)} min`;
+    if (secondsAgo < 86400) return `hace ${Math.floor(secondsAgo / 3600)} h`;
+    return `hace ${Math.floor(secondsAgo / 86400)} dias`;
   }
 
   if (!user) return null;
@@ -123,62 +217,181 @@ function ParentRewards() {
     return <div className="dashboard-loading">Cargando recompensas...</div>;
   }
 
+  const colorGradients = {
+    pink: "linear-gradient(135deg, #ec4899, #f472b6)",
+    teal: "linear-gradient(135deg, #14b8a6, #5eead4)",
+    yellow: "linear-gradient(135deg, #eab308, #fbbf24)",
+    purple: "linear-gradient(135deg, #9420D4, #b44de8)",
+  };
+
   return (
     <div className="dashboard">
       {/* Header */}
-      <h1 className="dashboard-title">Catálogo de Recompensas</h1>
-      <p className="dashboard-subtitle">Mira las recompensas disponibles y canjea puntos por privilegios especiales</p>
-
-      {/* Filtro por hijo */}
-      <div className="chart-card" style={{ marginBottom: 24 }}>
-        <div style={{ marginBottom: 8 }}>
-          <label style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>Ver recompensas para:</label>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div>
+          <h1 className="dashboard-title">Catalogo de Recompensas</h1>
+          <p className="dashboard-subtitle">Crea recompensas para motivar a tus hijos y aprueba sus solicitudes</p>
         </div>
-        <div className="filter-pills">
-          <button
-            className={`filter-pill ${filterChild === "todos" ? "active" : ""}`}
-            onClick={() => setFilterChild("todos")}
-          >
-            Todos los Hijos
-          </button>
-          {children.map((child, i) => {
-            const color = getChildColor(i);
-            return (
-              <button
-                key={child.id}
-                className={`filter-pill ${filterChild === child.id ? "active" : ""}`}
-                onClick={() => setFilterChild(child.id)}
+        <button
+          className="btn-add-task"
+          onClick={() => setShowForm(true)}
+          style={{ marginBottom: 0 }}
+        >
+          + Agregar Recompensa
+        </button>
+      </div>
+
+      {/* Modal: Crear Recompensa */}
+      {showForm && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
+          <div className="modal-box">
+            <h2 className="modal-title">Nueva Recompensa</h2>
+
+            <div className="form-group">
+              <label>Nombre de la recompensa *</label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="ej. Ver pelicula en cine"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Puntos necesarios *</label>
+              <input
+                type="number"
+                min="1"
+                value={form.pointsCost}
+                onChange={(e) => setForm({ ...form, pointsCost: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Asignar a</label>
+              <select
+                value={form.childId}
+                onChange={(e) => setForm({ ...form, childId: e.target.value })}
+                className="child-select"
               >
-                <span className={`reward-chip-avatar`} style={{
-                  background: color === "pink" ? "linear-gradient(135deg, #ec4899, #f472b6)" :
-                    color === "teal" ? "linear-gradient(135deg, #14b8a6, #5eead4)" :
-                    color === "yellow" ? "linear-gradient(135deg, #eab308, #fbbf24)" :
-                    "linear-gradient(135deg, #9420D4, #b44de8)",
-                  display: "inline-flex", width: 22, height: 22, borderRadius: "50%",
-                  alignItems: "center", justifyContent: "center", fontSize: 10,
-                  fontWeight: 700, color: "#fff"
-                }}>
-                  {getChildInitials(child)}
-                </span>
-                {child.first_name}
+                <option value="">Todos los hijos</option>
+                {children.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.first_name} {child.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Icono de la recompensa</label>
+              <div className="icon-selector">
+                {Object.entries(REWARD_ICONS).map(([emoji]) => (
+                  <button
+                    key={emoji}
+                    className={`icon-option ${form.icon === emoji ? "selected" : ""}`}
+                    onClick={() => setForm({ ...form, icon: emoji })}
+                    type="button"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Fecha de vencimiento (opcional)</label>
+              <input
+                type="date"
+                value={form.expiresAt}
+                onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Descripcion (opcional)</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="ej. Salida al cine con los papas"
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="btn-add-task"
+                style={{ flex: 1, background: "#f3f4f6", color: "#6b7280", marginBottom: 0 }}
+                onClick={() => setShowForm(false)}
+                disabled={submitting}
+              >
+                Cancelar
               </button>
+              <button
+                className="btn-add-task"
+                style={{ flex: 1, marginBottom: 0 }}
+                onClick={handleCreateReward}
+                disabled={submitting}
+              >
+                {submitting ? "Creando..." : "Crear Recompensa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seccion: Solicitudes Pendientes */}
+      {pendingRequests.length > 0 && (
+        <div className="requests-section">
+          <div className="requests-header">
+            <h2>Solicitudes de Canje</h2>
+            <span className="requests-badge">{pendingRequests.length}</span>
+          </div>
+          {pendingRequests.map((request) => {
+            const childColor = getChildColor(children.findIndex((c) => c.id === request.child_id));
+            return (
+              <div className="request-card" key={request.id}>
+                <div
+                  className="request-avatar"
+                  style={{ background: colorGradients[childColor] }}
+                >
+                  {getChildInitials(request.children)}
+                </div>
+                <div className="request-info">
+                  <div className="request-reward-name">
+                    {request.rewards.icon} {request.rewards.title}
+                  </div>
+                  <div className="request-meta">
+                    {request.children.first_name} - {formatTimeAgo(request.requested_at)}
+                  </div>
+                </div>
+                <span className="request-cost">{request.rewards.points_cost} pts</span>
+                <div className="request-actions">
+                  <button
+                    className="btn-approve"
+                    onClick={() => handleApprove(request)}
+                  >
+                    Aprobar
+                  </button>
+                  <button
+                    className="btn-reject"
+                    onClick={() => handleReject(request)}
+                  >
+                    Declinar
+                  </button>
+                </div>
+              </div>
             );
           })}
         </div>
-      </div>
+      )}
 
-      {/* Balance cards */}
+      {/* Balance de Puntos */}
       <div className="balance-cards">
         {children.map((child, i) => {
           const color = getChildColor(i);
           return (
             <div className="balance-card" key={child.id}>
-              <div className="balance-avatar" style={{
-                background: color === "pink" ? "linear-gradient(135deg, #ec4899, #f472b6)" :
-                  color === "teal" ? "linear-gradient(135deg, #14b8a6, #5eead4)" :
-                  color === "yellow" ? "linear-gradient(135deg, #eab308, #fbbf24)" :
-                  "linear-gradient(135deg, #9420D4, #b44de8)"
-              }}>
+              <div className="balance-avatar" style={{ background: colorGradients[color] }}>
                 {getChildInitials(child)}
               </div>
               <div className="balance-info">
@@ -194,16 +407,43 @@ function ParentRewards() {
         })}
       </div>
 
-      {/* Titulo de recompensas disponibles */}
+      {/* Recompensas */}
       <h2 className="section-title">Recompensas Disponibles</h2>
 
-      {/* Grid de recompensas */}
       {rewards.length > 0 ? (
         <div className="rewards-grid">
           {rewards.map((reward) => {
-            const eligible = getEligibleChildren(reward);
+            const expired = isExpired(reward);
             return (
-              <div className="reward-card" key={reward.id}>
+              <div
+                className={`reward-card ${expired ? "expired-card" : ""}`}
+                key={reward.id}
+                style={expired ? { opacity: 0.5, pointerEvents: "none" } : {}}
+              >
+                <button
+                  className="btn-reward-delete"
+                  onClick={() => handleDelete(reward.id)}
+                  title="Eliminar recompensa"
+                  style={expired ? { pointerEvents: "auto" } : {}}
+                >
+                  🗑
+                </button>
+
+                {/* Badges de estado */}
+                <div className="reward-badges-row">
+                  {expired && <span className="reward-badge expired">Vencida</span>}
+                  {!expired && reward.expires_at && (
+                    <span className="reward-badge active">Activa</span>
+                  )}
+                  {reward.child_id ? (
+                    <span className="reward-badge child-target">
+                      {getChildNameById(reward.child_id)}
+                    </span>
+                  ) : (
+                    <span className="reward-badge all-children">Todos</span>
+                  )}
+                </div>
+
                 <div className="reward-icon">
                   {REWARD_ICONS[reward.icon] || reward.icon || "🎁"}
                 </div>
@@ -214,34 +454,6 @@ function ParentRewards() {
                   <span className="cost-number">{reward.points_cost}</span>
                   <span>puntos</span>
                 </div>
-                <div className="reward-eligible">
-                  <div className="reward-eligible-label">Pueden canjear:</div>
-                  <div className="reward-eligible-chips">
-                    {eligible.length > 0 ? (
-                      eligible.map((child, ci) => {
-                        const color = getChildColor(children.indexOf(child));
-                        return (
-                          <div className="reward-chip" key={child.id}>
-                            <div className="reward-chip-avatar" style={{
-                              background: color === "pink" ? "linear-gradient(135deg, #ec4899, #f472b6)" :
-                                color === "teal" ? "linear-gradient(135deg, #14b8a6, #5eead4)" :
-                                color === "yellow" ? "linear-gradient(135deg, #eab308, #fbbf24)" :
-                                "linear-gradient(135deg, #9420D4, #b44de8)"
-                            }}>
-                              {getChildInitials(child)}
-                            </div>
-                            {child.first_name}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <span style={{ fontSize: 12, color: "#9ca3af" }}>Nadie tiene suficientes puntos</span>
-                    )}
-                  </div>
-                </div>
-                <button className="btn-redeem" onClick={() => handleRedeem(reward)}>
-                  Canjear Recompensa
-                </button>
               </div>
             );
           })}
@@ -249,7 +461,17 @@ function ParentRewards() {
       ) : (
         <div className="empty-state">
           <div className="empty-icon">🎁</div>
-          <p>No hay recompensas creadas aún. Crea recompensas para motivar a tus hijos.</p>
+          <p>No hay recompensas creadas aun. Crea recompensas para motivar a tus hijos.</p>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`child-toast ${toast.type === "success" ? "toast-success" : toast.type === "error" ? "toast-error" : "toast-info"}`}
+          style={{ color: "#fff" }}
+        >
+          {toast.msg}
         </div>
       )}
     </div>

@@ -97,7 +97,7 @@ export async function getRedemptionsByChild(childId) {
     .from("redemptions")
     .select("*, rewards(title, icon, points_cost)")
     .eq("child_id", childId)
-    .order("created_at", { ascending: false });
+    .order("id", { ascending: false });
 
   if (error) throw error;
   return data || [];

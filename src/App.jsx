@@ -7,9 +7,11 @@ import LoginChild from "./pages/LoginChild";
 import ParentHome from "./pages/ParentHome";
 import ParentTasks from "./pages/ParentTasks";
 import ParentRewards from "./pages/ParentRewards";
+import ParentProfile from "./pages/ParentProfile";
 import ChildHome from "./pages/ChildHome";
 import ChildTasks from "./pages/ChildTasks";
 import ChildRewards from "./pages/ChildRewards";
+import ChildProfile from "./pages/ChildProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ChildNavbar from "./components/ChildNavbar";
@@ -83,6 +85,22 @@ function App() {
           element={
             <ProtectedRoute role="child">
               <ChildRewards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/parent-profile"
+          element={
+            <ProtectedRoute role="parent">
+              <ParentProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/child-profile"
+          element={
+            <ProtectedRoute role="child">
+              <ChildProfile />
             </ProtectedRoute>
           }
         />
