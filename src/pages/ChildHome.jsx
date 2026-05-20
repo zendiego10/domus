@@ -6,6 +6,7 @@ import { getRecentTasksByChild, getRedemptionCount } from "../services/childServ
 import { getRewardsForChild } from "../services/rewardService";
 import { computeBadges } from "../lib/badges";
 import { POINTS_PER_LEVEL } from "../lib/constants";
+import { getAvatarById } from "../lib/avatars";
 
 function getLevel(pts) {
   return Math.max(1, Math.floor(pts / POINTS_PER_LEVEL) + 1);
@@ -117,9 +118,19 @@ function ChildHome() {
 
       {/* ─── Saludo + Level Badge ─── */}
       <div className="child-dashboard-header">
-        <div>
-          <h1 className="dashboard-title">¡Bienvenido, {user.firstName}!</h1>
-          <p className="dashboard-subtitle">Aquí está tu progreso de hoy.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {user.avatar && getAvatarById(user.avatar) ? (
+            <div
+              className="child-home-avatar"
+              style={{ background: getAvatarById(user.avatar).bg }}
+            >
+              {getAvatarById(user.avatar).emoji}
+            </div>
+          ) : null}
+          <div>
+            <h1 className="dashboard-title">¡Bienvenido, {user.firstName}!</h1>
+            <p className="dashboard-subtitle">Aquí está tu progreso de hoy.</p>
+          </div>
         </div>
         <div>
           <span className="child-level-badge">⭐ Nivel {level}</span>

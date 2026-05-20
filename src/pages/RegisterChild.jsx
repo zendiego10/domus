@@ -3,16 +3,14 @@ import { Link, useSearchParams } from "react-router-dom";
 import FormContainer from "../components/FormContainer";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
+import AvatarPicker from "../components/AvatarPicker";
 import { isValidPin } from "../utils/validators";
-import { registerChild } from "../services/childService";
-
-
+import { registerChild, updateChildAvatar } from "../services/childService";
 
 function RegisterChild() {
   const [searchParams] = useSearchParams();
   const codeFromUrl = searchParams.get("code") || "";
 
-  // Estado del formulario para crear un hijo asociado a un codigo familiar.
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,40 +21,27 @@ function RegisterChild() {
     confirmPin: "",
   });
 
-  // Errores de validacion/servicio, feedback de exito y estado de carga.
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState("");
+
+  // Paso 2: selección de avatar
+  const [savedChild, setSavedChild] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  // Paso 3: registro completado
+  const [done, setDone] = useState(false);
 
   function handleChange(event) {
-    // Actualiza el estado con el valor del input cambiado.
     const { name, value } = event.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
   function validateForm() {
-    // Valida datos obligatorios y formato del PIN/codigo familiar.
     const newErrors = {};
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "Ingresa el nombre.";
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Ingresa el apellido.";
-    }
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Ingresa el nombre de usuario.";
-    }
-
-    if (!formData.birthDate) {
-      newErrors.birthDate = "Selecciona la fecha de nacimiento.";
-    }
+    if (!formData.firstName.trim()) newErrors.firstName = "Ingresa el nombre.";
+    if (!formData.lastName.trim())  newErrors.lastName  = "Ingresa el apellido.";
+    if (!formData.username.trim())  newErrors.username  = "Ingresa el nombre de usuario.";
+    if (!formData.birthDate)        newErrors.birthDate = "Selecciona la fecha de nacimiento.";
 
     if (!formData.familyCode.trim()) {
       newErrors.familyCode = "Ingresa el código del padre.";
@@ -81,55 +66,83 @@ function RegisterChild() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-
-    // Ejecuta validaciones locales antes de enviar al backend.
     const validationErrors = validateForm();
     setErrors(validationErrors);
-    setSuccessMessage("");
-
     if (Object.keys(validationErrors).length > 0) return;
-    
+
     try {
       setLoading(true);
-
-      // Registra al hijo y lo enlaza con el padre por familyCode.
-      const savedChild = await registerChild(formData);
-
-      setSuccessMessage(
-        `Registro exitoso. El hijo ${savedChild.first_name} quedó asociado correctamente al padre.`
-      );
-
-      setFormData({
-        firstName: "",
-        lastName: "",
-        username: "",
-        birthDate: "",
-        familyCode: "",
-        pin: "",
-        confirmPin: "",
-      });
-
-      setErrors({});
+      const child = await registerChild(formData);
+      // Pasar al paso de selección de avatar
+      setSavedChild(child);
     } catch (error) {
-      console.error(error);
-
-      // Traduce errores de backend a mensajes legibles.
       const message = error?.message || "";
-
       if (message.includes("JSON object requested, multiple (or no) rows returned")) {
         setErrors({ familyCode: "El código del padre no existe." });
       } else if (message.includes("children_username_key")) {
         setErrors({ username: "Ese nombre de usuario ya está registrado." });
       } else {
-        setErrors({
-          general: "Ocurrió un error al registrar el hijo. Intenta nuevamente.",
-        });
+        setErrors({ general: "Ocurrió un error al registrar. Intenta nuevamente." });
       }
     } finally {
       setLoading(false);
     }
   }
 
+  async function handleAvatarConfirm(avatarId) {
+    setAvatarLoading(true);
+    try {
+      await updateChildAvatar(savedChild.id, avatarId);
+      setDone(true);
+    } catch {
+      // Si falla el avatar, igual completamos el registro
+      setDone(true);
+    } finally {
+      setAvatarLoading(false);
+    }
+  }
+
+  // Paso 3: registro completo
+  if (done) {
+    return (
+      <FormContainer
+        title={`¡Bienvenido, ${savedChild.first_name}! 🎉`}
+        subtitle="Tu cuenta fue creada con éxito."
+      >
+        <p className="success-text" style={{ textAlign: "center", fontSize: 15 }}>
+          Ya puedes iniciar sesión con tu usuario y PIN.
+        </p>
+        <div style={{ marginTop: 24 }}>
+          <Link to="/login-child" className="primary-btn" style={{
+            display: "block", textAlign: "center", padding: "12px",
+            background: "linear-gradient(135deg, #9420D4, #b44de8)",
+            color: "#fff", borderRadius: 12, fontWeight: 700,
+            textDecoration: "none", fontSize: 15,
+          }}>
+            Ir a iniciar sesión →
+          </Link>
+        </div>
+      </FormContainer>
+    );
+  }
+
+  // Paso 2: selección de avatar
+  if (savedChild) {
+    return (
+      <FormContainer
+        title={`¡Hola, ${savedChild.first_name}!`}
+        subtitle="Un último paso antes de empezar."
+      >
+        <AvatarPicker
+          confirmLabel="Continuar"
+          loading={avatarLoading}
+          onConfirm={handleAvatarConfirm}
+        />
+      </FormContainer>
+    );
+  }
+
+  // Paso 1: formulario de registro
   return (
     <FormContainer
       title="Registro de Hijo"
@@ -199,19 +212,15 @@ function RegisterChild() {
           onChange={handleChange}
           placeholder="Repite el PIN"
         />
-        {errors.confirmPin && (
-          <p className="error-text">{errors.confirmPin}</p>
-        )}
+        {errors.confirmPin && <p className="error-text">{errors.confirmPin}</p>}
 
         <Button type="submit" text={loading ? "Registrando..." : "Registrarse"} />
-        
+
         {errors.general && <p className="error-text">{errors.general}</p>}
-        {successMessage && <p className="success-text">{successMessage}</p>}
 
         <p className="link-row">
           ¿Ya tienes cuenta? <Link to="/login-child">Inicia sesión</Link>
         </p>
-
         <p className="link-row">
           ¿Eres padre o madre? <Link to="/register-parent">Regístrate aquí</Link>
         </p>

@@ -76,6 +76,7 @@ function LoginChild() {
         firstName: child.first_name,
         lastName: child.last_name,
         parentId: child.parent_id,
+        avatar: child.avatar || null,
       });
 
       setSuccessMessage(

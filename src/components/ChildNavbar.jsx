@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserSession, clearUserSession } from "../utils/auth";
+import { getAvatarById } from "../lib/avatars";
 
 function ChildNavbar() {
   const navigate = useNavigate();
@@ -99,8 +100,15 @@ function ChildNavbar() {
                 onClick={() => setDropdownOpen((prev) => !prev)}
                 aria-label="Menú de usuario"
                 aria-expanded={dropdownOpen}
+                style={
+                  user.avatar && getAvatarById(user.avatar)
+                    ? { background: getAvatarById(user.avatar).bg, fontSize: 18, padding: 0 }
+                    : {}
+                }
               >
-                {getInitials()}
+                {user.avatar && getAvatarById(user.avatar)
+                  ? getAvatarById(user.avatar).emoji
+                  : getInitials()}
               </button>
 
               {dropdownOpen && (

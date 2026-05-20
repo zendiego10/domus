@@ -73,6 +73,15 @@ export async function loginChild(username, pin) {
   return data;
 }
 
+export async function updateChildAvatar(childId, avatarId) {
+  const { error } = await supabase
+    .from("children")
+    .update({ avatar: avatarId })
+    .eq("id", childId);
+
+  if (error) throw error;
+}
+
 export async function updateChildProfile(childId, { firstName, lastName }) {
   const { data, error } = await supabase
     .from("children")

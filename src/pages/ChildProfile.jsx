@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession, saveUserSession, clearUserSession } from "../utils/auth";
 import { getChildPoints, getChildProgress } from "../services/dashboardService";
-import { updateChildProfile } from "../services/childService";
+import { updateChildProfile, updateChildAvatar } from "../services/childService";
 import { computeBadges } from "../lib/badges";
 import PointsTimeline from "../components/child/PointsTimeline";
+import AvatarPicker from "../components/AvatarPicker";
+import { getAvatarById } from "../lib/avatars";
 
 function ChildProfile() {
   const navigate = useNavigate();
@@ -21,6 +23,8 @@ function ChildProfile() {
   const [nameError, setNameError] = useState("");
 
   const [toast, setToast] = useState(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== "child") {
@@ -55,6 +59,22 @@ function ChildProfile() {
     setNameForm({ firstName: user.firstName || "", lastName: user.lastName || "" });
     setNameError("");
     setEditingName(true);
+  }
+
+  async function handleAvatarConfirm(avatarId) {
+    setAvatarSaving(true);
+    try {
+      await updateChildAvatar(user.id, avatarId);
+      const updated = { ...user, avatar: avatarId };
+      saveUserSession(updated);
+      setUser(updated);
+      setShowAvatarPicker(false);
+      showToast("Avatar actualizado.");
+    } catch {
+      showToast("No se pudo guardar el avatar.");
+    } finally {
+      setAvatarSaving(false);
+    }
   }
 
   async function saveName() {
@@ -103,9 +123,43 @@ function ChildProfile() {
     <div className="dashboard">
       {toast && <div className="child-toast toast-success">{toast}</div>}
 
+      {/* Modal selector de avatar */}
+      {showAvatarPicker && (
+        <div className="modal-overlay" onClick={() => setShowAvatarPicker(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <AvatarPicker
+              currentAvatarId={user.avatar}
+              confirmLabel="Guardar avatar"
+              loading={avatarSaving}
+              onConfirm={handleAvatarConfirm}
+              onCancel={() => setShowAvatarPicker(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Perfil */}
       <div className="profile-card">
-        <div className="profile-avatar">{getInitials()}</div>
+        {/* Avatar: muestra el seleccionado o las iniciales */}
+        <div className="profile-avatar-wrap">
+          {user.avatar && getAvatarById(user.avatar) ? (
+            <div
+              className="profile-avatar profile-avatar-emoji"
+              style={{ background: getAvatarById(user.avatar).bg }}
+            >
+              {getAvatarById(user.avatar).emoji}
+            </div>
+          ) : (
+            <div className="profile-avatar">{getInitials()}</div>
+          )}
+          <button
+            className="btn-change-avatar"
+            onClick={() => setShowAvatarPicker(true)}
+            title="Cambiar avatar"
+          >
+            🎨
+          </button>
+        </div>
         <div className="profile-info">
           {editingName ? (
             <div className="profile-edit-name">
