@@ -11,6 +11,50 @@ import { difficultyOf } from "../lib/taskDifficulty";
 
 const CHILD_COLORS = ["pink", "teal", "yellow", "purple"];
 
+// Componente separado para evitar llamar useState dentro de un .map()
+function ReviewTaskCard({ task, onApprove, onReject, TaskCardMeta, TaskMenu }) {
+  const [rejReason, setRejReason] = useState("");
+  const [showRejInput, setShowRejInput] = useState(false);
+
+  return (
+    <div className="task-card">
+      {task.photo_url && (
+        <img src={task.photo_url} alt="Evidencia" className="task-photo-thumb" />
+      )}
+      <div className="task-content">
+        <h3>{task.title}</h3>
+        <TaskCardMeta task={task} />
+        <div className="review-actions" style={{ marginTop: 8 }}>
+          <button className="btn-approve" onClick={() => onApprove(task)}>
+            ✓ Aprobar
+          </button>
+          <button className="btn-reject" onClick={() => setShowRejInput(!showRejInput)}>
+            ✗ Rechazar
+          </button>
+        </div>
+        {showRejInput && (
+          <div style={{ marginTop: 8 }}>
+            <input
+              className="add-task-input"
+              placeholder="Motivo (opcional)"
+              value={rejReason}
+              onChange={(e) => setRejReason(e.target.value)}
+              style={{ marginBottom: 6 }}
+            />
+            <button
+              className="btn-reject"
+              onClick={() => { onReject(task, rejReason); setShowRejInput(false); }}
+            >
+              Confirmar rechazo
+            </button>
+          </div>
+        )}
+      </div>
+      <TaskMenu task={task} />
+    </div>
+  );
+}
+
 function ParentTasks() {
   const navigate = useNavigate();
   const user = getUserSession();
@@ -487,51 +531,16 @@ function ParentTasks() {
         {reviewTasks.length > 0 && (
           <div>
             <span className="review-column-header">📷 Por revisar ({reviewTasks.length})</span>
-            {reviewTasks.map((task) => {
-              const childData = children.find((c) => c.id === task.child_id);
-              const [rejReason, setRejReason] = useState("");
-              const [showRejInput, setShowRejInput] = useState(false);
-              return (
-                <div className="task-card" key={task.id}>
-                  {task.photo_url && (
-                    <img src={task.photo_url} alt="Evidencia" className="task-photo-thumb" />
-                  )}
-                  <div className="task-content">
-                    <h3>{task.title}</h3>
-                    <TaskCardMeta task={task} />
-                    <div className="review-actions" style={{ marginTop: 8 }}>
-                      <button className="btn-approve" onClick={() => handleApproveReview(task)}>
-                        ✓ Aprobar
-                      </button>
-                      <button
-                        className="btn-reject"
-                        onClick={() => setShowRejInput(!showRejInput)}
-                      >
-                        ✗ Rechazar
-                      </button>
-                    </div>
-                    {showRejInput && (
-                      <div style={{ marginTop: 8 }}>
-                        <input
-                          className="add-task-input"
-                          placeholder="Motivo (opcional)"
-                          value={rejReason}
-                          onChange={(e) => setRejReason(e.target.value)}
-                          style={{ marginBottom: 6 }}
-                        />
-                        <button
-                          className="btn-reject"
-                          onClick={() => { handleRejectReview(task, rejReason); setShowRejInput(false); }}
-                        >
-                          Confirmar rechazo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <TaskMenu task={task} />
-                </div>
-              );
-            })}
+            {reviewTasks.map((task) => (
+              <ReviewTaskCard
+                key={task.id}
+                task={task}
+                onApprove={handleApproveReview}
+                onReject={handleRejectReview}
+                TaskCardMeta={TaskCardMeta}
+                TaskMenu={TaskMenu}
+              />
+            ))}
           </div>
         )}
 
