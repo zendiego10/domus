@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
+import { hashSecret, verifySecret } from "../utils/crypto";
 
 async function findParentByFamilyCode(familyCode) {
-  // Busca al padre/madre dueño del codigo familiar para crear la relacion.
   const { data, error } = await supabase
     .from("parents")
     .select("id, family_code")
@@ -16,10 +16,9 @@ async function findParentByFamilyCode(familyCode) {
 }
 
 export async function registerChild(childData) {
-  // Paso 1: valida que el codigo familiar pertenezca a un padre existente.
   const parent = await findParentByFamilyCode(childData.familyCode);
+  const hashedPin = await hashSecret(childData.pin);
 
-  // Paso 2: crea al hijo ligado por parent_id.
   const { data, error } = await supabase
     .from("children")
     .insert([
@@ -29,7 +28,7 @@ export async function registerChild(childData) {
         last_name: childData.lastName,
         username: childData.username,
         birth_date: childData.birthDate,
-        pin: childData.pin,
+        pin: hashedPin,
       },
     ])
     .select();
@@ -38,12 +37,10 @@ export async function registerChild(childData) {
     throw error;
   }
 
-  // Retorna el hijo creado para confirmar en interfaz.
   return data[0];
 }
 
 export async function loginChild(username, pin) {
-  // Busca al hijo por username (se espera unico).
   const { data, error } = await supabase
     .from("children")
     .select("*")
@@ -58,11 +55,33 @@ export async function loginChild(username, pin) {
     throw new Error("CHILD_NOT_FOUND");
   }
 
-  // Valida que el PIN enviado coincida con el PIN guardado.
-  if (data.pin !== pin) {
+  const { matches, legacy } = await verifySecret(pin, data.pin);
+
+  if (!matches) {
     throw new Error("INVALID_PIN");
   }
 
+  // Migración lazy: si el PIN estaba en texto plano, lo hashea ahora.
+  if (legacy) {
+    const newHash = await hashSecret(pin);
+    await supabase
+      .from("children")
+      .update({ pin: newHash })
+      .eq("id", data.id);
+  }
+
+  return data;
+}
+
+export async function updateChildProfile(childId, { firstName, lastName }) {
+  const { data, error } = await supabase
+    .from("children")
+    .update({ first_name: firstName, last_name: lastName })
+    .eq("id", childId)
+    .select()
+    .single();
+
+  if (error) throw error;
   return data;
 }
 
@@ -112,4 +131,17 @@ export async function getRedemptionCount(childId) {
 
   if (error) throw error;
   return count || 0;
+}
+
+// Obtiene el historial de actividad del hijo desde activity_log.
+export async function getActivityHistory(childId, limit = 20) {
+  const { data, error } = await supabase
+    .from("activity_log")
+    .select("id, action, points, created_at")
+    .eq("child_id", childId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
 }

@@ -4,10 +4,11 @@ import { getUserSession } from "../utils/auth";
 import { getChildPoints, getChildProgress } from "../services/dashboardService";
 import { getRecentTasksByChild, getRedemptionCount } from "../services/childService";
 import { getRewardsForChild } from "../services/rewardService";
+import { computeBadges } from "../lib/badges";
+import { POINTS_PER_LEVEL } from "../lib/constants";
 
-// Calcula el nivel del hijo segun sus puntos acumulados.
 function getLevel(pts) {
-  return Math.max(1, Math.floor(pts / 100) + 1);
+  return Math.max(1, Math.floor(pts / POINTS_PER_LEVEL) + 1);
 }
 
 // Formatea una fecha ISO a texto legible en español.
@@ -97,6 +98,11 @@ function ChildHome() {
     progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
   const pendingCount = progress.total - progress.completed;
   const level = getLevel(points);
+  const levelProgress = points % POINTS_PER_LEVEL;
+  const nextLevelThreshold = POINTS_PER_LEVEL;
+
+  const badges = computeBadges({ points, completedTasks: progress.completed, streak: 0, redemptions: redemptionCount });
+  const unlockedBadges = badges.filter((b) => b.unlocked);
 
   if (loading) {
     return (
@@ -115,8 +121,44 @@ function ChildHome() {
           <h1 className="dashboard-title">¡Bienvenido, {user.firstName}!</h1>
           <p className="dashboard-subtitle">Aquí está tu progreso de hoy.</p>
         </div>
-        <span className="child-level-badge">⭐ Nivel {level}</span>
+        <div>
+          <span className="child-level-badge">⭐ Nivel {level}</span>
+          <div className="level-progress-wrap">
+            <div className="level-progress-bar">
+              <div
+                className="level-progress-fill"
+                style={{ width: `${(levelProgress / nextLevelThreshold) * 100}%` }}
+              />
+            </div>
+            <p className="level-progress-label">
+              {levelProgress} / {nextLevelThreshold} pts para Nivel {level + 1}
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* Strip de logros desbloqueados */}
+      {unlockedBadges.length > 0 && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          {unlockedBadges.map((b) => (
+            <span
+              key={b.id}
+              title={b.name}
+              style={{
+                background: "linear-gradient(135deg, #f5f0ff, #ede9fe)",
+                border: "1.5px solid #c084fc",
+                borderRadius: 20,
+                padding: "4px 10px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#7c3aed",
+              }}
+            >
+              {b.emoji} {b.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* ─── Tarjetas de Estadísticas ─── */}
       <div className="stat-cards">

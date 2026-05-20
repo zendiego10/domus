@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { generateFamilyCode } from "../utils/helpers";
+import { hashSecret, verifySecret } from "../utils/crypto";
 
 async function generateUniqueFamilyCode() {
   // Repite hasta encontrar un codigo familiar que no exista en la tabla parents.
@@ -18,7 +19,6 @@ async function generateUniqueFamilyCode() {
       throw error;
     }
 
-    // Si no devuelve filas, el codigo es libre y se puede usar.
     if (!data || data.length === 0) {
       isUnique = true;
     }
@@ -28,10 +28,9 @@ async function generateUniqueFamilyCode() {
 }
 
 export async function registerParent(parentData) {
-  // Primero genera el codigo familiar para enlazar futuros hijos.
   const familyCode = await generateUniqueFamilyCode();
+  const hashedPassword = await hashSecret(parentData.password);
 
-  // Inserta el registro del padre/madre en Supabase.
   const { data, error } = await supabase
     .from("parents")
     .insert([
@@ -42,7 +41,7 @@ export async function registerParent(parentData) {
         email: parentData.email,
         phone: parentData.phone,
         birth_date: parentData.birthDate,
-        password: parentData.password,
+        password: hashedPassword,
         family_code: familyCode,
         accepted_terms: parentData.acceptedTerms,
         accepted_marketing: parentData.acceptedMarketing,
@@ -54,12 +53,10 @@ export async function registerParent(parentData) {
     throw error;
   }
 
-  // Retorna el registro creado para usarlo en UI (ej: mostrar family_code).
   return data[0];
 }
 
 export async function loginParent(identifier, password) {
-  // Permite iniciar sesion con username o email.
   const { data, error } = await supabase
     .from("parents")
     .select("*")
@@ -74,17 +71,25 @@ export async function loginParent(identifier, password) {
   }
 
   const parent = data[0];
+  const { matches, legacy } = await verifySecret(password, parent.password);
 
-  // Compara credencial enviada contra el campo password almacenado.
-  if (parent.password !== password) {
+  if (!matches) {
     throw new Error("INVALID_PASSWORD");
+  }
+
+  // Migración lazy: si la contraseña estaba en texto plano, la hashea ahora.
+  if (legacy) {
+    const newHash = await hashSecret(password);
+    await supabase
+      .from("parents")
+      .update({ password: newHash })
+      .eq("id", parent.id);
   }
 
   return parent;
 }
 
 export async function findParentByEmail(email) {
-  // Verifica si existe un padre con ese correo para flujo de recuperar clave.
   const { data, error } = await supabase
     .from("parents")
     .select("id, email, username")
@@ -100,4 +105,37 @@ export async function findParentByEmail(email) {
   }
 
   return data;
+}
+
+export async function updateParentProfile(parentId, { firstName, lastName }) {
+  const { data, error } = await supabase
+    .from("parents")
+    .update({ first_name: firstName, last_name: lastName })
+    .eq("id", parentId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function changeParentPassword(parentId, currentPassword, newPassword) {
+  const { data, error } = await supabase
+    .from("parents")
+    .select("password")
+    .eq("id", parentId)
+    .single();
+
+  if (error) throw error;
+
+  const { matches } = await verifySecret(currentPassword, data.password);
+  if (!matches) throw new Error("WRONG_CURRENT_PASSWORD");
+
+  const newHash = await hashSecret(newPassword);
+  const { error: updateError } = await supabase
+    .from("parents")
+    .update({ password: newHash })
+    .eq("id", parentId);
+
+  if (updateError) throw updateError;
 }

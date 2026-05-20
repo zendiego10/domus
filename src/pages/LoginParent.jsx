@@ -75,6 +75,7 @@ function LoginParent() {
         firstName: parent.first_name,
         lastName: parent.last_name,
         email: parent.email,
+        familyCode: parent.family_code,
       });
       
       setSuccessMessage(

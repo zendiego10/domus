@@ -1842,3 +1842,598 @@
   background: #dbeafe;
   color: #2563eb;
 }
+
+/* ─── Fase 3: Profile editing ─── */
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-pencil {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.btn-pencil:hover { opacity: 1; }
+
+.profile-edit-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-edit-row {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-edit-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.profile-edit-input:focus {
+  outline: none;
+  border-color: #9420D4;
+  box-shadow: 0 0 0 3px rgba(148, 32, 212, 0.1);
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-save-inline {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-save-inline:hover:not(:disabled) { opacity: 0.88; }
+.btn-save-inline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-cancel-inline {
+  padding: 6px 14px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-cancel-inline:hover { background: #e5e7eb; }
+
+.profile-edit-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin: 0;
+}
+
+/* ─── Fase 3: Profile code card ─── */
+.profile-code-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-code-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-family-code {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #9420D4;
+  font-family: monospace;
+  background: #f5f0ff;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px dashed #c084fc;
+}
+
+.btn-copy {
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-copy:hover { background: #e5e7eb; border-color: #9ca3af; }
+
+.profile-code-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-add-child {
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-add-child:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(148, 32, 212, 0.3);
+}
+
+.btn-secondary-action {
+  padding: 9px 18px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-secondary-action:hover { background: #e5e7eb; }
+
+.btn-logout-profile {
+  padding: 9px 18px;
+  background: #fff;
+  color: #dc2626;
+  border: 1.5px solid #fca5a5;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-logout-profile:hover { background: #fef2f2; border-color: #dc2626; }
+
+.profile-success-msg {
+  color: #16a34a;
+  font-weight: 600;
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ─── Fase 3: Add child modal ─── */
+.add-child-code-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #f5f0ff;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1.5px dashed #c084fc;
+  margin-bottom: 8px;
+}
+
+.add-child-code-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.add-child-code-value {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #9420D4;
+  font-family: monospace;
+}
+
+/* ─── Fase 3: Badges ─── */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.badge-unlocked {
+  background: linear-gradient(135deg, #f5f0ff, #ede9fe);
+  border: 1.5px solid #c084fc;
+}
+
+.badge-locked {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.badge-emoji { font-size: 28px; }
+
+.badge-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.2;
+}
+
+/* ─── Fase 3: Points timeline ─── */
+.points-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 8px;
+  position: relative;
+}
+
+.points-timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f0f0f5;
+}
+
+.timeline-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+  z-index: 1;
+}
+
+.dot-positive { background: #22c55e; box-shadow: 0 0 0 2px #dcfce7; }
+.dot-negative { background: #9420D4; box-shadow: 0 0 0 2px #f5f0ff; }
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-action {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.timeline-points {
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pts-positive { color: #16a34a; }
+.pts-negative { color: #9420D4; }
+
+/* ─── Fase 3: Task difficulty badges ─── */
+.difficulty-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+/* ─── Fase 3: Streak pill ─── */
+.streak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #ff6b35, #f59e0b);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+/* ─── Fase 3: Level progress bar ─── */
+.level-progress-wrap {
+  margin-top: 6px;
+}
+
+.level-progress-bar {
+  height: 6px;
+  background: #f0f0f5;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.level-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9420D4, #b44de8);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.level-progress-label {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+/* ─── Fase 3: Milestone toast ─── */
+.toast-milestone {
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 16px 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(148, 32, 212, 0.4);
+  text-align: center;
+}
+
+/* ─── Fase 3: Pending review column ─── */
+.review-column-header {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+
+.pill-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.pill-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+/* ─── Fase 3: Task photo review ─── */
+.task-photo-thumb {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border: 1.5px solid #e5e7eb;
+}
+
+.review-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-upload-photo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #f5f0ff;
+  color: #9420D4;
+  border: 1.5px solid #c084fc;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-upload-photo:hover { background: #ede9fe; }
+
+/* ─── Fase 3: Children ranking (replaces bar chart) ─── */
+.ranking-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f0f0f5;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.ranking-podium {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ranking-item {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  border-radius: 14px;
+  text-align: center;
+  transition: transform 0.15s;
+  cursor: default;
+}
+.ranking-item:hover { transform: translateY(-2px); }
+
+.ranking-item.rank-gold {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+}
+.ranking-item.rank-silver {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border: 2px solid #94a3b8;
+  box-shadow: 0 4px 16px rgba(148, 163, 184, 0.2);
+}
+.ranking-item.rank-bronze {
+  background: linear-gradient(135deg, #fef9f0, #fed7aa);
+  border: 2px solid #fb923c;
+  box-shadow: 0 4px 16px rgba(251, 146, 60, 0.2);
+}
+
+.ranking-medal { font-size: 28px; }
+.ranking-name { font-size: 14px; font-weight: 700; color: #1f2937; }
+.ranking-pts  { font-size: 20px; font-weight: 700; color: #9420D4; }
+.ranking-pts-label { font-size: 11px; color: #9ca3af; }
+
+.ranking-rest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-rest-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #f0f0f5;
+}
+
+.ranking-rest-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9420D4, #b44de8);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ranking-rest-info { flex: 1; }
+.ranking-rest-name { font-size: 14px; font-weight: 600; color: #1f2937; }
+.ranking-rest-msg  { font-size: 12px; color: #9ca3af; }
+.ranking-rest-pts  { font-size: 14px; font-weight: 700; color: #9420D4; }
+
+/* ─── Fase 3: Task menu (3 dots) ─── */
+.task-menu-wrap {
+  position: relative;
+}
+
+.btn-task-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #9ca3af;
+  padding: 2px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-task-menu:hover { background: #f3f4f6; color: #374151; }
+
+.task-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  min-width: 130px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.task-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.task-dropdown-item:hover { background: #f9fafb; }
+.task-dropdown-item.danger { color: #dc2626; }
+.task-dropdown-item.danger:hover { background: #fef2f2; }
+
+/* ─── Fase 3: Rejection reason ─── */
+.rejection-note {
+  font-size: 12px;
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 5px 9px;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .profile-edit-row { flex-direction: column; }
+  .profile-code-actions { flex-direction: column; }
+  .ranking-podium { flex-direction: column; }
+  .badges-grid { grid-template-columns: repeat(3, 1fr); }
+}

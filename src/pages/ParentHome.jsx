@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
 import { getDashboardStats, getChildProgress, getActivityLog } from "../services/dashboardService";
 import { calculateAge } from "../utils/helpers";
+import ChildrenRanking from "../components/parent/ChildrenRanking";
 
 // Colores asignados ciclicamente a cada hijo.
 const CHILD_COLORS = ["pink", "teal", "yellow", "purple"];
@@ -73,11 +74,6 @@ function ParentHome() {
   if (loading) {
     return <div className="dashboard-loading">Cargando dashboard...</div>;
   }
-
-  // Encontrar el maximo de puntos para escalar el chart.
-  const maxPoints = stats?.children?.length
-    ? Math.max(...stats.children.map((c) => Math.abs(c.points)), 1)
-    : 1;
 
   return (
     <div className="dashboard">
@@ -161,29 +157,9 @@ function ParentHome() {
         </div>
       )}
 
-      {/* Distribución de Puntos - Bar Chart */}
+      {/* Ranking familiar */}
       {stats?.children?.length > 0 && (
-        <div className="chart-card">
-          <h2>Distribución de Puntos</h2>
-          <div className="bar-chart">
-            <div className="bar-chart-axis">
-              <span>{maxPoints}</span>
-              <span>{Math.round(maxPoints / 2)}</span>
-              <span>0</span>
-            </div>
-            <div className="bar-chart-bars">
-              {stats.children.map((child) => {
-                const heightPercent = maxPoints > 0 ? (Math.abs(child.points) / maxPoints) * 100 : 0;
-                return (
-                  <div className="bar-item" key={child.id}>
-                    <div className="bar" style={{ height: `${Math.max(heightPercent, 2)}%` }} />
-                    <span className="bar-label">{child.first_name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <ChildrenRanking children={stats.children} />
       )}
 
       {/* Actividad Reciente */}

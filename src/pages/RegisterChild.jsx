@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import FormContainer from "../components/FormContainer";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
@@ -9,13 +9,16 @@ import { registerChild } from "../services/childService";
 
 
 function RegisterChild() {
+  const [searchParams] = useSearchParams();
+  const codeFromUrl = searchParams.get("code") || "";
+
   // Estado del formulario para crear un hijo asociado a un codigo familiar.
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     username: "",
     birthDate: "",
-    familyCode: "",
+    familyCode: codeFromUrl,
     pin: "",
     confirmPin: "",
   });

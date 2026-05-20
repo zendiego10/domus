@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
-import { getTasksByParent, createTask, completeTask, uncompleteTask } from "../services/taskService";
+import {
+  getTasksByParent, createTask, completeTask, uncompleteTask,
+  deleteTask, updateTask, approveTaskReview, rejectTaskReview,
+  generateRecurringInstances,
+} from "../services/taskService";
 import { getChildrenByParent } from "../services/dashboardService";
+import { difficultyOf } from "../lib/taskDifficulty";
 
 const CHILD_COLORS = ["pink", "teal", "yellow", "purple"];
 
@@ -17,15 +22,25 @@ function ParentTasks() {
   const [filterType, setFilterType] = useState("todas");
   const [filterChild, setFilterChild] = useState("todos");
 
-  // Estado del formulario de nueva tarea.
   const [formData, setFormData] = useState({
-    title: "",
-    childId: "",
-    category: "",
-    points: "",
-    description: "",
-    dueDate: "",
+    title: "", childId: "", category: "", points: "", description: "", dueDate: "",
+    isRecurring: false, recurrenceFrequency: "weekly",
   });
+
+  // Menú de 3 puntos
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // Modal de edición
+  const [editingTask, setEditingTask] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Modal de eliminación
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (!user || user.role !== "parent") {
@@ -35,6 +50,17 @@ function ParentTasks() {
     loadData();
   }, []);
 
+  // Cierra el menú al hacer clic fuera.
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   async function loadData() {
     try {
       setLoading(true);
@@ -42,7 +68,17 @@ function ParentTasks() {
         getTasksByParent(user.id),
         getChildrenByParent(user.id),
       ]);
-      setTasks(tasksData);
+
+      // Genera instancias de tareas recurrentes si corresponde.
+      let allTasks = tasksData;
+      try {
+        const newInstances = await generateRecurringInstances(user.id, tasksData);
+        if (newInstances.length > 0) allTasks = [...newInstances, ...tasksData];
+      } catch {
+        // Las columnas recurrentes pueden no existir aún (migración pendiente).
+      }
+
+      setTasks(allTasks);
       setChildren(childrenData);
     } catch (error) {
       console.error("Error cargando tareas:", error);
@@ -51,7 +87,11 @@ function ParentTasks() {
     }
   }
 
-  // Filtra las tareas segun tipo y hijo seleccionado.
+  function showToast(message, type = "success") {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }
+
   function getFilteredTasks() {
     return tasks.filter((task) => {
       if (filterType !== "todas" && task.category !== filterType) return false;
@@ -62,13 +102,12 @@ function ParentTasks() {
 
   const filtered = getFilteredTasks();
   const pendingTasks = filtered.filter((t) => t.status === "pending");
+  const reviewTasks = filtered.filter((t) => t.status === "pending_review");
   const completedTasks = filtered.filter((t) => t.status === "completed");
 
-  // Maneja el envio del formulario de nueva tarea.
   async function handleAddTask(event) {
     event.preventDefault();
     if (!formData.title || !formData.childId || !formData.category || !formData.points) return;
-
     try {
       const newTask = await createTask({
         parentId: user.id,
@@ -78,43 +117,114 @@ function ParentTasks() {
         category: formData.category,
         points: parseInt(formData.points),
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
+        isRecurring: formData.isRecurring,
+        recurrenceFrequency: formData.isRecurring ? formData.recurrenceFrequency : null,
       });
-
       setTasks((prev) => [newTask, ...prev]);
-      setFormData({ title: "", childId: "", category: "", points: "", description: "", dueDate: "" });
+      setFormData({ title: "", childId: "", category: "", points: "", description: "", dueDate: "", isRecurring: false, recurrenceFrequency: "weekly" });
       setShowForm(false);
+      showToast("Tarea creada.");
     } catch (error) {
       console.error("Error creando tarea:", error);
     }
   }
 
-  // Marca una tarea como completada.
   async function handleComplete(task) {
     try {
       await completeTask(task);
-      // Recarga para reflejar cambios.
       await loadData();
     } catch (error) {
       console.error("Error completando tarea:", error);
     }
   }
 
-  // Desmarca una tarea completada y la devuelve a pendiente.
   async function handleUncomplete(task) {
     try {
       await uncompleteTask(task);
-      // Recarga para reflejar cambios.
       await loadData();
     } catch (error) {
       console.error("Error desmarcando tarea:", error);
     }
   }
 
+  async function handleApproveReview(task) {
+    try {
+      await approveTaskReview(task);
+      await loadData();
+      showToast("Tarea aprobada. Puntos otorgados.");
+    } catch (err) {
+      console.error("Error aprobando revisión:", err);
+      showToast("No se pudo aprobar.", "error");
+    }
+  }
+
+  async function handleRejectReview(task, reason) {
+    try {
+      await rejectTaskReview(task, reason);
+      await loadData();
+      showToast("Tarea devuelta al hijo.");
+    } catch (err) {
+      console.error("Error rechazando revisión:", err);
+    }
+  }
+
+  function openEdit(task) {
+    setOpenMenuId(null);
+    setEditingTask(task);
+    setEditForm({
+      title: task.title,
+      description: task.description || "",
+      category: task.category,
+      points: task.points,
+      dueDate: task.due_date ? task.due_date.slice(0, 16) : "",
+      childId: task.child_id,
+    });
+  }
+
+  async function saveEdit() {
+    if (!editForm.title || !editForm.category || !editForm.points) return;
+    setEditSaving(true);
+    try {
+      const updated = await updateTask(editingTask.id, {
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category,
+        points: parseInt(editForm.points),
+        dueDate: editForm.dueDate ? new Date(editForm.dueDate).toISOString() : null,
+        childId: editForm.childId,
+      });
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      setEditingTask(null);
+      showToast("Tarea actualizada.");
+    } catch (err) {
+      if (err.message === "CANNOT_EDIT_COMPLETED") {
+        showToast("No se puede editar una tarea completada.", "error");
+      } else {
+        showToast("Error al guardar.", "error");
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function confirmDeleteTask() {
+    setDeleting(true);
+    try {
+      await deleteTask(confirmDelete);
+      setTasks((prev) => prev.filter((t) => t.id !== confirmDelete.id));
+      setConfirmDelete(null);
+      showToast("Tarea eliminada.");
+    } catch (err) {
+      console.error("Error eliminando:", err);
+      showToast("No se pudo eliminar.", "error");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function getChildInitials(child) {
     if (!child) return "?";
-    const first = child.first_name?.[0] || "";
-    const last = child.last_name?.[0] || "";
-    return (first + last).toUpperCase();
+    return ((child.first_name?.[0] || "") + (child.last_name?.[0] || "")).toUpperCase();
   }
 
   function getChildColor(childId) {
@@ -122,12 +232,21 @@ function ParentTasks() {
     return CHILD_COLORS[idx >= 0 ? idx % CHILD_COLORS.length : 0];
   }
 
+  function avatarStyle(color) {
+    const styles = {
+      pink:   "linear-gradient(135deg, #ec4899, #f472b6)",
+      teal:   "linear-gradient(135deg, #14b8a6, #5eead4)",
+      yellow: "linear-gradient(135deg, #eab308, #fbbf24)",
+      purple: "linear-gradient(135deg, #9420D4, #b44de8)",
+    };
+    return { background: styles[color] || styles.purple };
+  }
+
   function formatDate(dateStr) {
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleDateString("es", { day: "numeric", month: "numeric", year: "numeric" });
   }
 
-  // Formatea fecha y hora para mostrar el deadline completo.
   function formatDateTime(dateStr) {
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleString("es", {
@@ -135,25 +254,73 @@ function ParentTasks() {
     });
   }
 
-  // Determina si la tarea fue completada a tiempo o tarde.
   function getDeliveryStatus(task) {
     if (!task.due_date || !task.completed_at) return null;
-    const due = new Date(task.due_date);
-    const completed = new Date(task.completed_at);
-    if (completed <= due) {
-      return { label: "A tiempo", className: "task-ontime" };
-    }
-    return { label: "Entregada tarde", className: "task-late" };
+    const completed = new Date(task.completed_at) <= new Date(task.due_date);
+    return completed
+      ? { label: "A tiempo", className: "task-ontime" }
+      : { label: "Entregada tarde", className: "task-late" };
+  }
+
+  function TaskMenu({ task }) {
+    const isOpen = openMenuId === task.id;
+    return (
+      <div className="task-menu-wrap" ref={isOpen ? menuRef : null}>
+        <button
+          className="btn-task-menu"
+          onClick={(e) => { e.stopPropagation(); setOpenMenuId(isOpen ? null : task.id); }}
+        >
+          ⋯
+        </button>
+        {isOpen && (
+          <div className="task-dropdown">
+            {task.status === "pending" && (
+              <button className="task-dropdown-item" onClick={() => openEdit(task)}>
+                ✏️ Editar
+              </button>
+            )}
+            <button
+              className="task-dropdown-item danger"
+              onClick={() => { setOpenMenuId(null); setConfirmDelete(task); }}
+            >
+              🗑️ Eliminar
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function TaskCardMeta({ task }) {
+    const childData = children.find((c) => c.id === task.child_id);
+    const childName = task.children?.first_name || childData?.first_name || "Hijo";
+    const color = getChildColor(task.child_id);
+    const diff = difficultyOf(task.points);
+    return (
+      <div className="task-meta">
+        <div className="task-meta-child">
+          <div className="task-meta-child-avatar" style={avatarStyle(color)}>
+            {getChildInitials(childData || task.children)}
+          </div>
+          {childName}
+        </div>
+        <span className={`task-badge ${task.category}`}>
+          {task.category === "academica" ? "Académica" : "Doméstica"}
+        </span>
+        <span className="difficulty-badge" title={diff.label}>{diff.stars}</span>
+      </div>
+    );
   }
 
   if (!user) return null;
-
-  if (loading) {
-    return <div className="dashboard-loading">Cargando tareas...</div>;
-  }
+  if (loading) return <div className="dashboard-loading">Cargando tareas...</div>;
 
   return (
     <div className="dashboard">
+      {toast && (
+        <div className={`child-toast toast-${toast.type}`}>{toast.message}</div>
+      )}
+
       {/* Header */}
       <div className="dashboard-header">
         <div className="dashboard-header-text">
@@ -165,7 +332,7 @@ function ParentTasks() {
         </button>
       </div>
 
-      {/* Formulario de agregar tarea */}
+      {/* Formulario */}
       {showForm && (
         <div className="add-task-card">
           <h2>Agregar Nueva Tarea</h2>
@@ -211,7 +378,6 @@ function ParentTasks() {
                 onChange={(e) => setFormData({ ...formData, points: e.target.value })}
                 required
               />
-              {/* Campo de fecha y hora limite para la tarea */}
               <div className="add-task-field">
                 <label className="add-task-label">Fecha y hora límite (opcional)</label>
                 <input
@@ -227,6 +393,28 @@ function ParentTasks() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
+              <div className="add-task-field full-width" style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, fontWeight: 500, color: "#374151" }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.isRecurring}
+                    onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                    style={{ accentColor: "#9420D4" }}
+                  />
+                  🔁 Tarea recurrente
+                </label>
+                {formData.isRecurring && (
+                  <select
+                    className="add-task-select"
+                    value={formData.recurrenceFrequency}
+                    onChange={(e) => setFormData({ ...formData, recurrenceFrequency: e.target.value })}
+                    style={{ maxWidth: 160 }}
+                  >
+                    <option value="daily">Diaria</option>
+                    <option value="weekly">Semanal</option>
+                  </select>
+                )}
+              </div>
             </div>
             <div className="add-task-actions">
               <button type="submit" className="btn-add">Agregar Tarea</button>
@@ -265,9 +453,7 @@ function ParentTasks() {
           >
             <option value="todos">Todos los Hijos</option>
             {children.map((child) => (
-              <option key={child.id} value={child.id}>
-                {child.first_name}
-              </option>
+              <option key={child.id} value={child.id}>{child.first_name}</option>
             ))}
           </select>
         </div>
@@ -295,58 +481,87 @@ function ParentTasks() {
         </div>
       </div>
 
-      {/* Columnas de tareas */}
+      {/* Columnas */}
       <div className="task-columns">
+        {/* Pendientes de Revisión (foto) */}
+        {reviewTasks.length > 0 && (
+          <div>
+            <span className="review-column-header">📷 Por revisar ({reviewTasks.length})</span>
+            {reviewTasks.map((task) => {
+              const childData = children.find((c) => c.id === task.child_id);
+              const [rejReason, setRejReason] = useState("");
+              const [showRejInput, setShowRejInput] = useState(false);
+              return (
+                <div className="task-card" key={task.id}>
+                  {task.photo_url && (
+                    <img src={task.photo_url} alt="Evidencia" className="task-photo-thumb" />
+                  )}
+                  <div className="task-content">
+                    <h3>{task.title}</h3>
+                    <TaskCardMeta task={task} />
+                    <div className="review-actions" style={{ marginTop: 8 }}>
+                      <button className="btn-approve" onClick={() => handleApproveReview(task)}>
+                        ✓ Aprobar
+                      </button>
+                      <button
+                        className="btn-reject"
+                        onClick={() => setShowRejInput(!showRejInput)}
+                      >
+                        ✗ Rechazar
+                      </button>
+                    </div>
+                    {showRejInput && (
+                      <div style={{ marginTop: 8 }}>
+                        <input
+                          className="add-task-input"
+                          placeholder="Motivo (opcional)"
+                          value={rejReason}
+                          onChange={(e) => setRejReason(e.target.value)}
+                          style={{ marginBottom: 6 }}
+                        />
+                        <button
+                          className="btn-reject"
+                          onClick={() => { handleRejectReview(task, rejReason); setShowRejInput(false); }}
+                        >
+                          Confirmar rechazo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <TaskMenu task={task} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Tareas Pendientes */}
         <div>
           <h2>Tareas Pendientes ({pendingTasks.length})</h2>
           {pendingTasks.length > 0 ? (
-            pendingTasks.map((task) => {
-              const childData = children.find((c) => c.id === task.child_id);
-              const childName = task.children?.first_name || childData?.first_name || "Hijo";
-              const color = getChildColor(task.child_id);
-              return (
-                <div className="task-card" key={task.id}>
-                  <div className="task-check">
-                    <button
-                      className="task-check-btn"
-                      onClick={() => handleComplete(task)}
-                      title="Marcar como completada"
-                    >
-                      ✓
-                    </button>
-                  </div>
-                  <div className="task-content">
-                    <h3>{task.title}</h3>
-                    {task.description && <p>{task.description}</p>}
-                    <div className="task-meta">
-                      <div className="task-meta-child">
-                        <div className={`task-meta-child-avatar`} style={{
-                          background: color === "pink" ? "linear-gradient(135deg, #ec4899, #f472b6)" :
-                            color === "teal" ? "linear-gradient(135deg, #14b8a6, #5eead4)" :
-                            color === "yellow" ? "linear-gradient(135deg, #eab308, #fbbf24)" :
-                            "linear-gradient(135deg, #9420D4, #b44de8)"
-                        }}>
-                          {getChildInitials(childData || task.children)}
-                        </div>
-                        {childName}
-                      </div>
-                      <span className={`task-badge ${task.category}`}>
-                        {task.category === "academica" ? "Académica" : "Doméstica"}
-                      </span>
-                      {task.due_date && (
-                        <span className="task-date">📅 {formatDateTime(task.due_date)}</span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="task-points">+{task.points}</span>
+            pendingTasks.map((task) => (
+              <div className="task-card" key={task.id}>
+                <div className="task-check">
+                  <button
+                    className="task-check-btn"
+                    onClick={() => handleComplete(task)}
+                    title="Marcar como completada"
+                  >✓</button>
                 </div>
-              );
-            })
+                <div className="task-content">
+                  <h3>{task.title}</h3>
+                  {task.description && <p>{task.description}</p>}
+                  <TaskCardMeta task={task} />
+                  {task.due_date && (
+                    <span className="task-date">📅 {formatDateTime(task.due_date)}</span>
+                  )}
+                </div>
+                <span className="task-points">+{task.points}</span>
+                <TaskMenu task={task} />
+              </div>
+            ))
           ) : (
-            <div className="empty-state">
-              <p>No hay tareas pendientes 🎉</p>
-            </div>
+            <div className="empty-state"><p>No hay tareas pendientes 🎉</p></div>
           )}
         </div>
 
@@ -355,9 +570,7 @@ function ParentTasks() {
           <h2>Tareas Completadas ({completedTasks.length})</h2>
           {completedTasks.length > 0 ? (
             completedTasks.map((task) => {
-              const childData = children.find((c) => c.id === task.child_id);
-              const childName = task.children?.first_name || childData?.first_name || "Hijo";
-              const color = getChildColor(task.child_id);
+              const delivery = getDeliveryStatus(task);
               return (
                 <div className="task-card" key={task.id}>
                   <div className="task-check">
@@ -365,51 +578,123 @@ function ParentTasks() {
                       className="task-check-done task-check-undo"
                       onClick={() => handleUncomplete(task)}
                       title="Desmarcar tarea"
-                    >
-                      ✓
-                    </button>
+                    >✓</button>
                   </div>
                   <div className="task-content">
                     <h3>{task.title}</h3>
                     {task.description && <p>{task.description}</p>}
-                    <div className="task-meta">
-                      <div className="task-meta-child">
-                        <div className={`task-meta-child-avatar`} style={{
-                          background: color === "pink" ? "linear-gradient(135deg, #ec4899, #f472b6)" :
-                            color === "teal" ? "linear-gradient(135deg, #14b8a6, #5eead4)" :
-                            color === "yellow" ? "linear-gradient(135deg, #eab308, #fbbf24)" :
-                            "linear-gradient(135deg, #9420D4, #b44de8)"
-                        }}>
-                          {getChildInitials(childData || task.children)}
-                        </div>
-                        {childName}
-                      </div>
-                      <span className={`task-badge ${task.category}`}>
-                        {task.category === "academica" ? "Académica" : "Doméstica"}
-                      </span>
-                      <span className="task-date">✅ {formatDate(task.completed_at)}</span>
-                      {/* Indicador de si fue a tiempo o tarde */}
-                      {(() => {
-                        const status = getDeliveryStatus(task);
-                        return status ? (
-                          <span className={`task-delivery ${status.className}`}>
-                            {status.label}
-                          </span>
-                        ) : null;
-                      })()}
-                    </div>
+                    <TaskCardMeta task={task} />
+                    <span className="task-date">✅ {formatDate(task.completed_at)}</span>
+                    {delivery && (
+                      <span className={`task-delivery ${delivery.className}`}>{delivery.label}</span>
+                    )}
                   </div>
                   <span className="task-points">+{task.points}</span>
+                  <TaskMenu task={task} />
                 </div>
               );
             })
           ) : (
-            <div className="empty-state">
-              <p>No hay tareas completadas aún</p>
-            </div>
+            <div className="empty-state"><p>No hay tareas completadas aún</p></div>
           )}
         </div>
       </div>
+
+      {/* Modal editar tarea */}
+      {editingTask && (
+        <div className="modal-overlay" onClick={() => setEditingTask(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">✏️ Editar tarea</h2>
+            <div className="form-group">
+              <label>Título</label>
+              <input
+                value={editForm.title}
+                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                placeholder="Título de la tarea"
+              />
+            </div>
+            <div className="form-group">
+              <label>Descripción</label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Descripción (opcional)"
+              />
+            </div>
+            <div className="form-group">
+              <label>Categoría</label>
+              <select
+                className="add-task-select"
+                value={editForm.category}
+                onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
+              >
+                <option value="academica">Académica</option>
+                <option value="domestica">Doméstica</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Puntos</label>
+              <input
+                type="number"
+                min="1"
+                value={editForm.points}
+                onChange={(e) => setEditForm((p) => ({ ...p, points: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Hijo asignado</label>
+              <select
+                className="add-task-select"
+                value={editForm.childId}
+                onChange={(e) => setEditForm((p) => ({ ...p, childId: e.target.value }))}
+              >
+                {children.map((c) => (
+                  <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Fecha y hora límite (opcional)</label>
+              <input
+                type="datetime-local"
+                value={editForm.dueDate}
+                onChange={(e) => setEditForm((p) => ({ ...p, dueDate: e.target.value }))}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn-approve" onClick={saveEdit} disabled={editSaving}>
+                {editSaving ? "Guardando…" : "Guardar"}
+              </button>
+              <button className="btn-cancel" onClick={() => setEditingTask(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal confirmar eliminación */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">🗑️ Eliminar tarea</h2>
+            <p style={{ color: "#374151", marginBottom: 8 }}>
+              ¿Seguro que quieres eliminar <strong>"{confirmDelete.title}"</strong>?
+            </p>
+            {confirmDelete.status === "completed" && (
+              <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 16 }}>
+                Esta tarea estaba completada. Se restarán {confirmDelete.points} pts de {
+                  children.find((c) => c.id === confirmDelete.child_id)?.first_name || "el hijo"
+                }.
+              </p>
+            )}
+            <div className="modal-actions">
+              <button className="btn-reject" onClick={confirmDeleteTask} disabled={deleting}>
+                {deleting ? "Eliminando…" : "Eliminar"}
+              </button>
+              <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

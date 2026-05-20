@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import LoginParent from "./pages/LoginParent";
 import RegisterParent from "./pages/RegisterParent";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import RegisterChild from "./pages/RegisterChild";
 import LoginChild from "./pages/LoginChild";
 import ParentHome from "./pages/ParentHome";
@@ -34,6 +35,7 @@ function App() {
         <Route path="/login-parent" element={<LoginParent />} />
         <Route path="/register-parent" element={<RegisterParent />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/register-child" element={<RegisterChild />} />
         <Route path="/login-child" element={<LoginChild />} />
 
