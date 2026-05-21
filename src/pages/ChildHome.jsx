@@ -7,6 +7,7 @@ import { getRewardsForChild } from "../services/rewardService";
 import { computeBadges } from "../lib/badges";
 import { POINTS_PER_LEVEL } from "../lib/constants";
 import { getAvatarById } from "../lib/avatars";
+import { getMotivationalPhrase, getProgressEmoji } from "../lib/motivationalPhrases";
 
 function getLevel(pts) {
   return Math.max(1, Math.floor(pts / POINTS_PER_LEVEL) + 1);
@@ -105,6 +106,17 @@ function ChildHome() {
   const badges = computeBadges({ points, completedTasks: progress.completed, streak: 0, redemptions: redemptionCount });
   const unlockedBadges = badges.filter((b) => b.unlocked);
 
+  // Próximo badge a desbloquear (el primero bloqueado)
+  const nextBadge = badges.find((b) => !b.unlocked);
+
+  // Frase motivacional contextual
+  const motivationalPhrase = getMotivationalPhrase({
+    progressPercent,
+    streak: 0,
+    pendingCount,
+  });
+  const progressEmoji = getProgressEmoji(progressPercent);
+
   if (loading) {
     return (
       <div className="dashboard">
@@ -147,6 +159,27 @@ function ChildHome() {
           </div>
         </div>
       </div>
+
+      {/* Banner motivacional */}
+      <div className="motivational-banner">
+        <span className="motivational-emoji">{progressEmoji}</span>
+        <p className="motivational-text">{motivationalPhrase}</p>
+      </div>
+
+      {/* Próximo logro a desbloquear */}
+      {nextBadge && (
+        <div className="next-badge-card">
+          <span className="next-badge-label">Próximo logro</span>
+          <div className="next-badge-content">
+            <span className="next-badge-emoji">{nextBadge.emoji}</span>
+            <div>
+              <p className="next-badge-name">{nextBadge.name}</p>
+              <p className="next-badge-hint">¡Sigue así para desbloquearlo!</p>
+            </div>
+            <div className="next-badge-lock">🔒</div>
+          </div>
+        </div>
+      )}
 
       {/* Strip de logros desbloqueados */}
       {unlockedBadges.length > 0 && (

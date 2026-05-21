@@ -6,7 +6,10 @@ import { completeTask, uncompleteTask, submitTaskWithPhoto } from "../services/t
 import { getChildPoints } from "../services/dashboardService";
 import { difficultyOf } from "../lib/taskDifficulty";
 import TaskPhotoUploader from "../components/TaskPhotoUploader";
+import CelebrationOverlay from "../components/child/CelebrationOverlay";
 import { POINTS_PER_LEVEL } from "../lib/constants";
+import { computeBadges } from "../lib/badges";
+import { getTaskCompletePhrase, getLevelUpPhrase } from "../lib/motivationalPhrases";
 
 function formatDate(isoString) {
   if (!isoString) return "";
@@ -37,6 +40,8 @@ function ChildTasks() {
   const [completing, setCompleting] = useState(null);
   const [uncompleting, setUncompleting] = useState(null);
   const [uploadingFor, setUploadingFor] = useState(null);
+  const [celebration, setCelebration] = useState(null); // { type, data }
+  const [completedCount, setCompletedCount] = useState(0);
 
   useEffect(() => {
     if (!user || user.role !== "child") {
@@ -54,6 +59,7 @@ function ChildTasks() {
       ]);
       setTasks(tasksData);
       setPoints(pts);
+      setCompletedCount(tasksData.filter((t) => t.status === "completed").length);
     } catch (err) {
       console.error("Error cargando tareas del hijo:", err);
     } finally {
@@ -70,21 +76,41 @@ function ChildTasks() {
     if (completing) return;
     setCompleting(task.id);
     try {
-      const oldPoints = points;
+      const oldPoints    = points;
+      const oldCompleted = completedCount;
+
       await completeTask(task);
+
       setTasks((prev) =>
         prev.map((t) => t.id === task.id
           ? { ...t, status: "completed", completed_at: new Date().toISOString() }
           : t)
       );
-      const newPoints = oldPoints + task.points;
-      setPoints(newPoints);
 
-      // Celebración de hito si cruza un múltiplo de 100 pts.
-      if (Math.floor(oldPoints / POINTS_PER_LEVEL) < Math.floor(newPoints / POINTS_PER_LEVEL)) {
-        showNotification(`🎉 ¡Cruzaste los ${Math.floor(newPoints / POINTS_PER_LEVEL) * POINTS_PER_LEVEL} puntos!`, task.points);
+      const newPoints    = oldPoints + task.points;
+      const newCompleted = oldCompleted + 1;
+      setPoints(newPoints);
+      setCompletedCount(newCompleted);
+
+      const didLevelUp = Math.floor(oldPoints / POINTS_PER_LEVEL) < Math.floor(newPoints / POINTS_PER_LEVEL);
+
+      // Detectar badge recién desbloqueado.
+      const prevBadges = computeBadges({ points: oldPoints, completedTasks: oldCompleted, streak: 0, redemptions: 0 });
+      const newBadges  = computeBadges({ points: newPoints, completedTasks: newCompleted, streak: 0, redemptions: 0 });
+      const newUnlocked = newBadges.filter((b, i) => b.unlocked && !prevBadges[i].unlocked);
+
+      if (didLevelUp) {
+        setCelebration({
+          type: "levelup",
+          data: { level: Math.floor(newPoints / POINTS_PER_LEVEL) + 1, phrase: getLevelUpPhrase() },
+        });
+      } else if (newUnlocked.length > 0) {
+        setCelebration({ type: "badge", data: { badge: newUnlocked[0] } });
       } else {
-        showNotification("¡Tarea completada!", task.points);
+        setCelebration({
+          type: "task",
+          data: { taskTitle: task.title, points: task.points, phrase: getTaskCompletePhrase() },
+        });
       }
     } catch (err) {
       console.error("Error completando tarea:", err);
@@ -143,6 +169,15 @@ function ChildTasks() {
 
   return (
     <div className="dashboard">
+      {/* Overlay de celebración */}
+      {celebration && (
+        <CelebrationOverlay
+          type={celebration.type}
+          data={celebration.data}
+          onDismiss={() => setCelebration(null)}
+        />
+      )}
+
       {/* Encabezado */}
       <div className="child-dashboard-header">
         <div>
