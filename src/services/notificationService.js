@@ -52,6 +52,14 @@ export async function getUnreadCount(recipientId, recipientRole) {
   return count || 0;
 }
 
+export async function markNotificationRead(id) {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function markAllRead(recipientId, recipientRole) {
   const { error } = await supabase
     .from("notifications")

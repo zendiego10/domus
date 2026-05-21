@@ -134,7 +134,7 @@ function ChildHome() {
         </div>
         <div>
           <span className="child-level-badge">⭐ Nivel {level}</span>
-          <div className="level-progress-wrap">
+          <div className="level-progress-wrap" style={{ marginTop: 10, minWidth: 140 }}>
             <div className="level-progress-bar">
               <div
                 className="level-progress-fill"
@@ -142,7 +142,7 @@ function ChildHome() {
               />
             </div>
             <p className="level-progress-label">
-              {levelProgress} / {nextLevelThreshold} pts para Nivel {level + 1}
+              {levelProgress} / {nextLevelThreshold} pts → Nv {level + 1}
             </p>
           </div>
         </div>

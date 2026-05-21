@@ -2575,6 +2575,142 @@
   flex-shrink: 0;
 }
 
+/* ─── Parent welcome greeting ─── */
+.parent-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* ─── Notification clickable item ─── */
+.notif-item--clickable { cursor: pointer; }
+.notif-tap-hint {
+  font-size: 10px;
+  color: #9420D4;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* ─── Mobile global improvements ─── */
+@media (max-width: 480px) {
+  /* Dashboard container */
+  .dashboard {
+    padding: 12px 14px;
+  }
+
+  /* Títulos más compactos */
+  .dashboard-title  { font-size: 20px !important; }
+  .dashboard-subtitle { font-size: 12px !important; }
+  .section-title    { font-size: 18px; }
+
+  /* Stat cards: 2 columnas en móvil pequeño */
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .stat-cards-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  .stat-card { padding: 14px 12px !important; }
+  .stat-card-value { font-size: 24px !important; }
+  .stat-card-icon { font-size: 22px !important; width: 38px !important; height: 38px !important; }
+  .stat-card h3 { font-size: 11px !important; }
+
+  /* Task cards más compactas */
+  .task-card {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+  .task-content h3 { font-size: 13px !important; }
+  .task-content p  { font-size: 12px !important; }
+  .task-points     { font-size: 13px !important; }
+  .task-badge      { font-size: 10px !important; padding: 2px 6px !important; }
+  .difficulty-badge { font-size: 10px !important; }
+
+  /* Child dashboard header en columna */
+  .child-dashboard-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .child-level-badge { font-size: 13px !important; padding: 4px 10px !important; }
+  .child-home-avatar { width: 44px !important; height: 44px !important; font-size: 24px !important; }
+  .child-points-pill { font-size: 13px !important; padding: 6px 12px !important; }
+
+  /* Reward cards: 1 columna */
+  .rewards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .rewards-grid-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .reward-card { padding: 14px !important; }
+  .reward-icon { font-size: 28px !important; }
+  .reward-title { font-size: 14px !important; }
+  .reward-desc  { font-size: 12px !important; }
+
+  /* Children grid: 1 columna */
+  .children-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .child-card { padding: 14px !important; }
+
+  /* Ranking en columna */
+  .ranking-card { padding: 16px !important; }
+  .ranking-pts  { font-size: 16px !important; }
+
+  /* Notificaciones */
+  .notif-panel-title { font-size: 15px !important; }
+  .notif-item { padding: 10px 6px !important; }
+  .notif-icon { font-size: 18px !important; }
+  .notif-title { font-size: 13px !important; }
+  .notif-message { font-size: 12px !important; }
+
+  /* Avatar picker en móvil: 3 columnas */
+  .avatar-picker-grid { grid-template-columns: repeat(5, 1fr) !important; gap: 6px !important; }
+  .avatar-option-circle { width: 42px !important; height: 42px !important; font-size: 22px !important; }
+  .avatar-option-label { font-size: 10px !important; }
+
+  /* Badges */
+  .badges-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+  .badge-emoji { font-size: 22px !important; }
+  .badge-name  { font-size: 10px !important; }
+
+  /* Perfil */
+  .profile-card { flex-direction: column !important; align-items: center !important; text-align: center !important; }
+  .profile-name { font-size: 20px !important; }
+  .profile-name-row { justify-content: center !important; }
+  .profile-code-card { padding: 16px !important; }
+  .profile-family-code { font-size: 22px !important; letter-spacing: 3px !important; }
+  .profile-code-actions { flex-direction: column !important; gap: 8px !important; }
+
+  /* Task columns en columna */
+  .task-columns {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modales a pantalla completa en móvil */
+  .modal-box {
+    border-radius: 16px 16px 0 0 !important;
+    margin-top: auto !important;
+    max-height: 85vh !important;
+  }
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  /* Progress bar de nivel */
+  .level-progress-wrap { min-width: 110px !important; }
+  .level-progress-label { font-size: 10px !important; }
+
+  /* Timeline */
+  .timeline-action { font-size: 12px !important; }
+  .timeline-points { font-size: 12px !important; }
+}
+
 /* ─── Notificaciones ─── */
 .navbar-avatar-wrap {
   position: relative;

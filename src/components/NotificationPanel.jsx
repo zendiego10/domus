@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getNotifications, markAllRead, getNotifIcon } from "../services/notificationService";
+import { useNavigate } from "react-router-dom";
+import { getNotifications, markAllRead, markNotificationRead, getNotifIcon } from "../services/notificationService";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -13,7 +14,21 @@ function timeAgo(dateStr) {
   return `hace ${days} días`;
 }
 
+// Ruta destino según tipo de notificación y rol del receptor.
+function getRouteForNotif(type, recipientRole) {
+  if (recipientRole === "parent") {
+    if (["task_completed", "task_review"].includes(type)) return "/parent-tasks";
+    if (["reward_requested"].includes(type))              return "/parent-rewards";
+  }
+  if (recipientRole === "child") {
+    if (["new_task", "task_approved", "task_rejected"].includes(type)) return "/child-tasks";
+    if (["new_reward", "reward_approved", "reward_rejected"].includes(type)) return "/child-rewards";
+  }
+  return null;
+}
+
 function NotificationPanel({ recipientId, recipientRole, onClose, onRead }) {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading]             = useState(true);
 
@@ -30,6 +45,24 @@ function NotificationPanel({ recipientId, recipientRole, onClose, onRead }) {
     onRead?.();
   }
 
+  async function handleClickNotif(notif) {
+    // Marcar como leída si no lo estaba.
+    if (!notif.read) {
+      markNotificationRead(notif.id).catch(() => {});
+      setNotifications((prev) =>
+        prev.map((n) => n.id === notif.id ? { ...n, read: true } : n)
+      );
+      const remaining = notifications.filter((n) => !n.read && n.id !== notif.id).length;
+      if (remaining === 0) onRead?.();
+    }
+    // Navegar a la pestaña correspondiente.
+    const route = getRouteForNotif(notif.type, recipientRole);
+    if (route) {
+      onClose();
+      navigate(route);
+    }
+  }
+
   const unread = notifications.filter((n) => !n.read).length;
 
   return (
@@ -42,7 +75,7 @@ function NotificationPanel({ recipientId, recipientRole, onClose, onRead }) {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {unread > 0 && (
             <button className="notif-mark-read" onClick={handleMarkAllRead}>
-              Marcar todo como leído
+              Marcar todo leído
             </button>
           )}
           <button className="notif-close" onClick={onClose}>✕</button>
@@ -54,22 +87,32 @@ function NotificationPanel({ recipientId, recipientRole, onClose, onRead }) {
 
         {!loading && notifications.length === 0 && (
           <div className="notif-empty">
-            <span style={{ fontSize: 32 }}>🔔</span>
+            <span style={{ fontSize: 36 }}>🔔</span>
             <p>No tienes notificaciones aún.</p>
           </div>
         )}
 
-        {!loading && notifications.map((n) => (
-          <div key={n.id} className={`notif-item ${n.read ? "" : "notif-item--unread"}`}>
-            <span className="notif-icon">{getNotifIcon(n.type)}</span>
-            <div className="notif-content">
-              <p className="notif-title">{n.title}</p>
-              {n.message && <p className="notif-message">{n.message}</p>}
-              <span className="notif-time">{timeAgo(n.created_at)}</span>
+        {!loading && notifications.map((n) => {
+          const route = getRouteForNotif(n.type, recipientRole);
+          return (
+            <div
+              key={n.id}
+              className={`notif-item ${n.read ? "" : "notif-item--unread"} ${route ? "notif-item--clickable" : ""}`}
+              onClick={() => handleClickNotif(n)}
+            >
+              <span className="notif-icon">{getNotifIcon(n.type)}</span>
+              <div className="notif-content">
+                <p className="notif-title">{n.title}</p>
+                {n.message && <p className="notif-message">{n.message}</p>}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                  <span className="notif-time">{timeAgo(n.created_at)}</span>
+                  {route && <span className="notif-tap-hint">Toca para ver →</span>}
+                </div>
+              </div>
+              {!n.read && <div className="notif-unread-dot" />}
             </div>
-            {!n.read && <div className="notif-unread-dot" />}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

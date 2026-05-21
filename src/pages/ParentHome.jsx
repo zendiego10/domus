@@ -77,6 +77,14 @@ function ParentHome() {
 
   return (
     <div className="dashboard">
+      {/* Saludo de bienvenida */}
+      <div className="parent-welcome">
+        <div>
+          <h1 className="dashboard-title">¡Bienvenido, {user.firstName}! 👋</h1>
+          <p className="dashboard-subtitle">Aquí está el resumen de tu familia.</p>
+        </div>
+      </div>
+
       {/* 4 tarjetas de resumen */}
       <div className="stat-cards">
         <div className="stat-card">
