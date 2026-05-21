@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { getChildPoints } from "./dashboardService";
+import { createNotification } from "./notificationService";
 
 // Obtiene todas las recompensas creadas por un padre.
 export async function getRewardsByParent(parentId) {
@@ -72,7 +73,28 @@ export async function createReward(rewardData) {
     data = fallback.data;
   }
 
-  return data[0];
+  const reward = data[0];
+
+  // Notificar al hijo o hijos que hay una nueva recompensa disponible.
+  if (rewardData.childId) {
+    createNotification(rewardData.childId, "child", "new_reward",
+      "Nueva recompensa disponible",
+      `${rewardData.icon || "🎁"} ${rewardData.title} — ${rewardData.pointsCost} pts`
+    ).catch(() => {});
+  } else {
+    // Recompensa para todos los hijos: notificar a cada uno.
+    supabase.from("children").select("id").eq("parent_id", rewardData.parentId)
+      .then(({ data: children }) => {
+        (children || []).forEach((c) =>
+          createNotification(c.id, "child", "new_reward",
+            "Nueva recompensa disponible",
+            `${rewardData.icon || "🎁"} ${rewardData.title} — ${rewardData.pointsCost} pts`
+          ).catch(() => {})
+        );
+      });
+  }
+
+  return reward;
 }
 
 // Elimina una recompensa.
@@ -101,7 +123,17 @@ export async function requestReward(rewardId, childId, parentId) {
     .select();
 
   if (error) throw error;
-  return data[0];
+  const request = data[0];
+
+  // Notificar al padre que el hijo solicitó una recompensa.
+  const { data: rewardData } = await supabase
+    .from("rewards").select("title, icon").eq("id", rewardId).maybeSingle();
+  createNotification(parentId, "parent", "reward_requested",
+    "Solicitud de recompensa",
+    `${rewardData?.icon || "🎁"} ${rewardData?.title || "Recompensa"}`
+  ).catch(() => {});
+
+  return request;
 }
 
 // Obtiene solicitudes pendientes de un padre.
@@ -194,16 +226,29 @@ export async function approveRequest(requestId, childId, pointsCost, parentId, r
 
   if (logError) throw logError;
 
+  createNotification(childId, "child", "reward_approved",
+    "¡Recompensa aprobada! 🎊",
+    `${rewardTitle} — se descontaron ${pointsCost} pts`
+  ).catch(() => {});
+
   return true;
 }
 
 // Rechaza una solicitud.
-export async function rejectRequest(requestId) {
+export async function rejectRequest(requestId, childId, rewardTitle) {
   const { error } = await supabase
     .from("reward_requests")
     .update({ status: "rejected", resolved_at: new Date().toISOString() })
     .eq("id", requestId);
 
   if (error) throw error;
+
+  if (childId) {
+    createNotification(childId, "child", "reward_rejected",
+      "Solicitud rechazada",
+      rewardTitle ? `Tu solicitud de "${rewardTitle}" no fue aprobada` : "El padre rechazó tu solicitud"
+    ).catch(() => {});
+  }
+
   return true;
 }

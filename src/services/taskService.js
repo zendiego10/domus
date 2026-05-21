@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { createNotification } from "./notificationService";
 
 // Obtiene todas las tareas de un padre, con datos del hijo asignado.
 export async function getTasksByParent(parentId) {
@@ -33,7 +34,9 @@ export async function createTask(taskData) {
     .select("*, children(first_name, last_name)");
 
   if (error) throw error;
-  return data[0];
+  const task = data[0];
+  createNotification(task.child_id, "child", "new_task", "Nueva tarea asignada", task.title).catch(() => {});
+  return task;
 }
 
 // Genera la siguiente instancia de tareas recurrentes completadas.
@@ -114,20 +117,30 @@ export async function completeTask(task) {
 
   if (logError) throw logError;
 
+  // Notificar al padre que el hijo completó una tarea.
+  createNotification(task.parent_id, "parent", "task_completed",
+    "Tarea completada",
+    task.title
+  ).catch(() => {});
+
   return true;
 }
 
 // Sube la foto de evidencia y cambia el estado a pending_review (sin otorgar puntos aún).
-export async function submitTaskWithPhoto(taskId, photoUrl) {
+export async function submitTaskWithPhoto(taskId, photoUrl, task) {
   const { error } = await supabase
     .from("tasks")
-    .update({
-      status: "pending_review",
-      photo_url: photoUrl,
-    })
+    .update({ status: "pending_review", photo_url: photoUrl })
     .eq("id", taskId);
 
   if (error) throw error;
+
+  if (task) {
+    createNotification(task.parent_id, "parent", "task_review",
+      "Evidencia enviada",
+      `${task.title} — revisa la foto del hijo`
+    ).catch(() => {});
+  }
   return true;
 }
 
@@ -154,6 +167,12 @@ export async function approveTaskReview(task) {
     }]);
 
   if (logError) throw logError;
+
+  createNotification(task.child_id, "child", "task_approved",
+    "¡Tarea aprobada!",
+    `Tu evidencia de "${task.title}" fue aprobada. +${task.points} pts`
+  ).catch(() => {});
+
   return true;
 }
 
@@ -170,6 +189,12 @@ export async function rejectTaskReview(task, reason = "") {
     .eq("id", task.id);
 
   if (error) throw error;
+
+  createNotification(task.child_id, "child", "task_rejected",
+    "Evidencia rechazada",
+    reason ? `"${task.title}" — Motivo: ${reason}` : `Vuelve a intentarlo en "${task.title}"`
+  ).catch(() => {});
+
   return true;
 }
 

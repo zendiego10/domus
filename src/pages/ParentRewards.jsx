@@ -171,7 +171,7 @@ function ParentRewards() {
     if (!window.confirm("Rechazar esta solicitud?")) return;
 
     try {
-      await rejectRequest(request.id);
+      await rejectRequest(request.id, request.child_id, request.rewards?.title);
       showToast("Solicitud rechazada", "info");
       await loadData();
     } catch (error) {

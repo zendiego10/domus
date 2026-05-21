@@ -112,7 +112,7 @@ function ChildTasks() {
 
   async function handlePhotoUploaded(task, publicUrl) {
     try {
-      await submitTaskWithPhoto(task.id, publicUrl);
+      await submitTaskWithPhoto(task.id, publicUrl, task);
       setTasks((prev) =>
         prev.map((t) => t.id === task.id
           ? { ...t, status: "pending_review", photo_url: publicUrl }

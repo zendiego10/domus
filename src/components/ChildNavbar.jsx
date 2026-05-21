@@ -2,12 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserSession, clearUserSession } from "../utils/auth";
 import { getAvatarById } from "../lib/avatars";
+import { getUnreadCount } from "../services/notificationService";
+import NotificationPanel from "./NotificationPanel";
 
 function ChildNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen]     = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showNotif, setShowNotif]       = useState(false);
+  const [unread, setUnread]             = useState(0);
   const dropdownRef = useRef(null);
 
   const user = getUserSession();
@@ -18,7 +22,12 @@ function ChildNavbar() {
     { label: "Recompensas", path: "/child-rewards", icon: "🎁" },
   ];
 
-  // Cierra ambos menus al cambiar de ruta.
+  useEffect(() => {
+    if (user?.id) {
+      getUnreadCount(user.id, "child").then(setUnread).catch(() => {});
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     setMobileOpen(false);
     setDropdownOpen(false);
@@ -95,21 +104,24 @@ function ChildNavbar() {
           {/* Avatar y dropdown de cuenta */}
           {user && (
             <div className="navbar-user" ref={dropdownRef}>
-              <button
-                className="navbar-avatar"
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                aria-label="Menú de usuario"
-                aria-expanded={dropdownOpen}
-                style={
-                  user.avatar && getAvatarById(user.avatar)
-                    ? { background: getAvatarById(user.avatar).bg, fontSize: 18, padding: 0 }
-                    : {}
-                }
-              >
-                {user.avatar && getAvatarById(user.avatar)
-                  ? getAvatarById(user.avatar).emoji
-                  : getInitials()}
-              </button>
+              <div className="navbar-avatar-wrap">
+                <button
+                  className="navbar-avatar"
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  aria-label="Menú de usuario"
+                  aria-expanded={dropdownOpen}
+                  style={
+                    user.avatar && getAvatarById(user.avatar)
+                      ? { background: getAvatarById(user.avatar).bg, fontSize: 18, padding: 0 }
+                      : {}
+                  }
+                >
+                  {user.avatar && getAvatarById(user.avatar)
+                    ? getAvatarById(user.avatar).emoji
+                    : getInitials()}
+                </button>
+                {unread > 0 && <span className="notif-red-dot" />}
+              </div>
 
               {dropdownOpen && (
                 <div className="navbar-dropdown">
@@ -126,6 +138,14 @@ function ChildNavbar() {
                   >
                     <span className="navbar-dropdown-icon">👤</span>
                     Mi cuenta
+                  </button>
+                  <button
+                    className="navbar-dropdown-item"
+                    onClick={() => { setDropdownOpen(false); setShowNotif(true); }}
+                  >
+                    <span className="navbar-dropdown-icon">🔔</span>
+                    Notificaciones
+                    {unread > 0 && <span className="notif-badge-inline">{unread}</span>}
                   </button>
                   <button
                     className="navbar-dropdown-item"
@@ -170,6 +190,20 @@ function ChildNavbar() {
           </button>
         ))}
       </div>
+
+      {/* Panel de notificaciones */}
+      {showNotif && (
+        <div className="modal-overlay" onClick={() => setShowNotif(false)}>
+          <div className="modal-box" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <NotificationPanel
+              recipientId={user.id}
+              recipientRole="child"
+              onClose={() => setShowNotif(false)}
+              onRead={() => setUnread(0)}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
