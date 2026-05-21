@@ -2594,9 +2594,9 @@
 
 /* ─── Mobile global improvements ─── */
 @media (max-width: 480px) {
-  /* Dashboard container */
+  /* Dashboard container — mantener padding-top para el navbar fijo (60px) */
   .dashboard {
-    padding: 12px 14px;
+    padding: 72px 14px 32px;
   }
 
   /* Títulos más compactos */
