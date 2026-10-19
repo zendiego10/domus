@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Archivos locales que no deben publicarse
+supabase/.temp/
+notes/
+usuarios_de_prueba.md
+CLAUDE.md
