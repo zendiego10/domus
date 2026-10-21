@@ -77,10 +77,10 @@ La columna **Semana** indica cuándo se implementa cada componente: `13` en la t
 
 | ADR | Problema | Cambio propuesto | Código afectado | Atributo | Estado |
 |---|---|---|---|---|---|
-| [ADR-001](adr/ADR-001-api-rest-en-capas.md) · API REST en capas | P4 | API REST propia en `src/backend/` con capas api / domain / data; el navegador solo habla con la API a través de `apiClient.js` | `taskService.js`, `rewardService.js`, `dashboardService.js`, `getTasksByChild()`, `supabase.js`, vistas | Seguridad (integridad) | Pendiente |
+| [ADR-001](adr/ADR-001-api-rest-en-capas.md) · API REST en capas | P4 | API REST propia en `src/backend/` con capas api / domain / data; el navegador solo habla con la API a través de `apiClient.js` | `taskService.js`, `rewardService.js`, `dashboardService.js`, `getTasksByChild()`, `supabase.js`, vistas | Seguridad (integridad) | Iniciada |
 | [ADR-002](adr/ADR-002-autenticacion-en-servidor.md) · Autenticación en servidor | P3 | Login en la API con token JWT, `AuthMiddleware` que valida rol y familia, RLS activado y bucket de fotos privado | `loginParent()`, `loginChild()`, `utils/auth.js`, `ProtectedRoute.jsx`, `TaskPhotoUploader.jsx` | Seguridad (confidencialidad, autenticidad) | Planeada semana 15 |
-| [ADR-003](adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | P2 | Cada operación de varias escrituras se vuelve una función de PostgreSQL en una sola transacción; se agrega `task_id` a `activity_log` | `completeTask()`, `approveTaskReview()`, `uncompleteTask()`, `deleteTask()`, `approveRequest()` | Confiabilidad (tolerancia a fallos, consistencia) | Pendiente |
-| [ADR-004](adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | P1 | Todas las reglas de puntos, nivel, racha e insignias se concentran en `gamification.js` y se exponen en un único endpoint | `lib/badges.js`, `lib/constants.js`, `dashboardService.js`, cálculos en `ChildHome.jsx`, `ChildTasks.jsx`, `ChildProfile.jsx`, `ParentHome.jsx` | Mantenibilidad (modularidad, modificabilidad, capacidad de prueba) | Pendiente |
+| [ADR-003](adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | P2 | Cada operación de varias escrituras se vuelve una función de PostgreSQL en una sola transacción; se agrega `task_id` a `activity_log` | `completeTask()`, `approveTaskReview()`, `uncompleteTask()`, `deleteTask()`, `approveRequest()` | Confiabilidad (tolerancia a fallos, consistencia) | Iniciada |
+| [ADR-004](adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | P1 | Todas las reglas de puntos, nivel, racha e insignias se concentran en `gamification.js` y se exponen en un único endpoint | `lib/badges.js`, `lib/constants.js`, `dashboardService.js`, cálculos en `ChildHome.jsx`, `ChildTasks.jsx`, `ChildProfile.jsx`, `ParentHome.jsx` | Mantenibilidad (modularidad, modificabilidad, capacidad de prueba) | Implementada |
 
 ## 5. Escenarios de calidad
 
@@ -141,20 +141,39 @@ El cambio principal frente a la arquitectura actual es visible en el diagrama de
 
 ## 7. Estado de implementación
 
-*(Sección pendiente de completar con el avance real en `src/` al cierre de la tercera entrega.)*
+**Semana 13 — hecho en esta entrega**
 
-**Semana 13 — en esta entrega**
+Documentación
 
-- Documentación de la arquitectura objetivo: este documento, los cuatro ADR y los diagramas C4.
-- Estructura de capas creada en `src/backend/` (`api/`, `domain/`, `data/`).
+- Arquitectura objetivo (este documento), los cuatro ADR en `docs/adr/` y los diagramas C4 en `docs/diagramas/`.
+- README actualizado con las instrucciones de ejecución, la tabla de endpoints y el estado de cada decisión.
+
+Capa de negocio (ADR-004, ADR-001)
+
+- `src/backend/domain/gamification.js`: única fuente de las reglas de puntos, nivel con tope `MAX_LEVEL = 10`, racha e insignias. La racha se calcula a partir de las fechas reales de completado, no con el valor fijo en cero que enviaban las vistas.
+- `src/backend/domain/taskStateMachine.js`: transiciones de estado permitidas por rol.
+
+Capa de datos (ADR-001, ADR-003)
+
+- `src/backend/data/`: `supabaseAdmin.js`, `childRepository.js` y `taskRepository.js`.
+- `supabase/migrations/001_complete_task.sql`: columna `task_id` en `activity_log` y función transaccional `complete_task`, aplicada y verificada sobre la base desplegada.
+
+Capa de API y presentación (ADR-001)
+
+- `src/backend/api/`: App Express y `ProgressController` con el endpoint `GET /api/children/:id/progress`, desplegado en Vercel como función serverless.
+- `src/frontend/services/apiClient.js`: `ChildHome.jsx`, `ChildTasks.jsx` y `ChildProfile.jsx` muestran el progreso que entrega la API, sin recalcularlo.
+
+Pruebas
+
+- 44 pruebas en `tests/`, unitarias y de integración, todas pasando: `gamification.test.js`, `taskStateMachine.test.js`, `taskRepository.test.js` y `progress.test.js`.
 
 **Semana 15 — pendiente para la entrega final**
 
 - Autenticación en el servidor, `AuthMiddleware` y activación de RLS (ADR-002).
-- Endpoints REST de tareas y canjes, y migración de todas las vistas a `apiClient` (ADR-001).
+- Endpoints REST de tareas y canjes, y migración de las vistas del padre a `apiClient`, incluido el cálculo de nivel que todavía queda en `ParentHome.jsx` (ADR-001, ADR-004).
 - Funciones transaccionales restantes: `approve_task_review`, `uncomplete_task`, `delete_task` y `approve_reward_request` (ADR-003).
-- Bucket de fotos privado con enlaces temporales.
-- Pruebas de integración de los endpoints.
+- Bucket de fotos privado con enlaces temporales (ADR-002).
+- Pruebas de integración de los endpoints de tareas y canjes.
 
 ---
 
