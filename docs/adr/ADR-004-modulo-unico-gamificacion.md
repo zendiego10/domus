@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-10-20
-- **Implementación:** Pendiente de implementación en `src/backend/domain/gamification.js`
+- **Implementación:** Implementada en semana 13 para las vistas del hijo (`src/backend/domain/gamification.js` con pruebas unitarias). `ParentHome.jsx` pasa a consumir la API en la semana 15, junto con el resto de las vistas del padre
 
 ## Contexto y problema
 
