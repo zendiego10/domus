@@ -87,3 +87,20 @@ export function buildChildProgress({ tasks = [], redemptions = [], today = new D
     badges: computeBadges(stats),
   };
 }
+
+
+// Caso de uso: progreso de un hijo leído desde la capa de datos.
+// Los repositorios llegan como parámetro (inyección de dependencias): así este
+// archivo no importa Supabase y se puede probar con repositorios falsos.
+// Devuelve null si el hijo no existe.
+export async function getChildProgress(childId, { childRepository, taskRepository }, today = new Date()) {
+  const child = await childRepository.findChildById(childId);
+  if (!child) return null;
+
+  const [tasks, redemptions] = await Promise.all([
+    taskRepository.findTasksByChild(childId),
+    childRepository.findRedemptionsByChild(childId),
+  ]);
+
+  return { childId: child.id, ...buildChildProgress({ tasks, redemptions, today }) };
+}
