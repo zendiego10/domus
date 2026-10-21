@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession, saveUserSession, clearUserSession } from "../utils/auth";
-import { getChildPoints, getChildProgress } from "../services/dashboardService";
+import { fetchChildProgress } from "../services/apiClient";
 import { updateChildProfile, updateChildAvatar } from "../services/childService";
-import { computeBadges } from "../lib/badges";
 import PointsTimeline from "../components/child/PointsTimeline";
 import AvatarPicker from "../components/AvatarPicker";
 import { getAvatarById } from "../lib/avatars";
@@ -12,8 +11,8 @@ function ChildProfile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(getUserSession());
 
-  const [points, setPoints] = useState(0);
-  const [progress, setProgress] = useState({ total: 0, completed: 0 });
+  // Puntos, tareas e insignias calculados por la API (ADR-004).
+  const [progress, setProgress] = useState({ points: 0, completedTasks: 0, totalTasks: 0, badges: [] });
   const [loading, setLoading] = useState(true);
 
   // Estado edición de nombre
@@ -31,14 +30,8 @@ function ChildProfile() {
       navigate("/login-child");
       return;
     }
-    Promise.all([
-      getChildPoints(user.id),
-      getChildProgress(user.id),
-    ])
-      .then(([pts, prog]) => {
-        setPoints(pts);
-        setProgress(prog);
-      })
+    fetchChildProgress(user.id)
+      .then((prog) => setProgress(prog))
       .catch((err) => console.error("Error cargando perfil:", err))
       .finally(() => setLoading(false));
   }, []);
@@ -101,16 +94,11 @@ function ChildProfile() {
     }
   }
 
-  const progressPercent = progress.total > 0
-    ? Math.round((progress.completed / progress.total) * 100)
+  const progressPercent = progress.totalTasks > 0
+    ? Math.round((progress.completedTasks / progress.totalTasks) * 100)
     : 0;
 
-  const badges = computeBadges({
-    points,
-    completedTasks: progress.completed,
-    streak: 0,
-    redemptions: 0,
-  });
+  const badges = progress.badges;
   const unlockedBadges = badges.filter((b) => b.unlocked);
 
   if (!user) return null;
@@ -203,14 +191,14 @@ function ChildProfile() {
         <div className="stat-card">
           <div className="stat-card-info">
             <h3>Puntos actuales</h3>
-            <div className="stat-card-value">{points}</div>
+            <div className="stat-card-value">{progress.points}</div>
           </div>
           <div className="stat-card-icon purple">⭐</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-info">
             <h3>Tareas completadas</h3>
-            <div className="stat-card-value green">{progress.completed}</div>
+            <div className="stat-card-value green">{progress.completedTasks}</div>
           </div>
           <div className="stat-card-icon green">✅</div>
         </div>
@@ -226,7 +214,7 @@ function ChildProfile() {
       {/* Barra de progreso */}
       <div className="chart-card">
         <h2>Progreso de tareas</h2>
-        <p className="dashboard-subtitle">{progress.completed} de {progress.total} tareas completadas</p>
+        <p className="dashboard-subtitle">{progress.completedTasks} de {progress.totalTasks} tareas completadas</p>
         <div className="progress-bar" style={{ height: "12px", borderRadius: "8px", background: "#f0f0f5" }}>
           <div
             className="progress-fill purple"

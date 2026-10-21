@@ -1,17 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
-import { getChildPoints, getChildProgress } from "../services/dashboardService";
-import { getRecentTasksByChild, getRedemptionCount } from "../services/childService";
+import { fetchChildProgress } from "../services/apiClient";
+import { getRecentTasksByChild } from "../services/childService";
 import { getRewardsForChild } from "../services/rewardService";
-import { computeBadges } from "../lib/badges";
-import { POINTS_PER_LEVEL } from "../lib/constants";
 import { getAvatarById } from "../lib/avatars";
 import { getMotivationalPhrase, getProgressEmoji } from "../lib/motivationalPhrases";
 
-function getLevel(pts) {
-  return Math.max(1, Math.floor(pts / POINTS_PER_LEVEL) + 1);
-}
+// Valores mientras carga o si la API no responde. Las reglas reales
+// (puntos, nivel, racha, insignias) las calcula el servidor (ADR-004).
+const EMPTY_PROGRESS = {
+  points: 0,
+  level: 1,
+  pointsInLevel: 0,
+  pointsToNextLevel: 0,
+  isMaxLevel: false,
+  streak: 0,
+  completedTasks: 0,
+  totalTasks: 0,
+  redemptions: 0,
+  badges: [],
+};
 
 // Formatea una fecha ISO a texto legible en español.
 function formatDate(isoString) {
@@ -46,15 +55,43 @@ function getTimeRemaining(dueDateStr) {
   return { text: "Vence muy pronto", className: "task-overdue" };
 }
 
+// Carga los datos del panel. Cada bloque va en su propio try/catch:
+// si uno falla, el resto del panel se sigue mostrando.
+async function loadDashboardData(user) {
+  const data = { progress: EMPTY_PROGRESS, recentTasks: [], affordableRewards: [] };
+
+  // Progreso (puntos, nivel, racha e insignias) calculado por la API.
+  try {
+    data.progress = await fetchChildProgress(user.id);
+  } catch (err) {
+    console.error("Error cargando el progreso del hijo:", err);
+  }
+
+  // Tareas recientes.
+  try {
+    data.recentTasks = await getRecentTasksByChild(user.id, 5);
+  } catch (err) {
+    console.error("Error cargando tareas recientes:", err);
+  }
+
+  // Recompensas que ya le alcanzan con sus puntos actuales.
+  try {
+    const rewards = await getRewardsForChild(user.parentId, user.id);
+    data.affordableRewards = rewards.filter((r) => r.points_cost <= data.progress.points).slice(0, 3);
+  } catch (err) {
+    console.warn("Error cargando recompensas en home:", err.message);
+  }
+
+  return data;
+}
+
 function ChildHome() {
   const navigate = useNavigate();
   const user = getUserSession();
 
-  const [points, setPoints] = useState(0);
-  const [progress, setProgress] = useState({ total: 0, completed: 0 });
+  const [progress, setProgress] = useState(EMPTY_PROGRESS);
   const [recentTasks, setRecentTasks] = useState([]);
   const [affordableRewards, setAffordableRewards] = useState([]);
-  const [redemptionCount, setRedemptionCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,48 +99,30 @@ function ChildHome() {
       navigate("/login-child");
       return;
     }
-    loadDashboard();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function loadDashboard() {
-    try {
-      // Datos principales — no deben fallar por problemas del sistema de recompensas.
-      const [pts, prog, tasks, redCount] = await Promise.all([
-        getChildPoints(user.id),
-        getChildProgress(user.id),
-        getRecentTasksByChild(user.id, 5),
-        getRedemptionCount(user.id),
-      ]);
-
-      setPoints(pts);
-      setProgress(prog);
-      setRecentTasks(tasks);
-      setRedemptionCount(redCount);
-
-      // Recompensas — bloque separado para no bloquear el resto si falla.
-      try {
-        const rewards = await getRewardsForChild(user.parentId, user.id);
-        setAffordableRewards(rewards.filter((r) => r.points_cost <= pts).slice(0, 3));
-      } catch (err) {
-        console.warn("Error cargando recompensas en home:", err.message);
-      }
-    } catch (err) {
-      console.error("Error cargando dashboard del hijo:", err);
-    } finally {
+    let active = true;
+    loadDashboardData(user).then((data) => {
+      if (!active) return;
+      setProgress(data.progress);
+      setRecentTasks(data.recentTasks);
+      setAffordableRewards(data.affordableRewards);
       setLoading(false);
-    }
-  }
+    });
+    // Si el hijo sale de la página antes de que termine la carga, no se actualiza nada.
+    return () => {
+      active = false;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return null;
 
+  // Aquí solo se calculan porcentajes para dibujar; las reglas vienen del servidor.
   const progressPercent =
-    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
-  const pendingCount = progress.total - progress.completed;
-  const level = getLevel(points);
-  const levelProgress = points % POINTS_PER_LEVEL;
-  const nextLevelThreshold = POINTS_PER_LEVEL;
+    progress.totalTasks > 0 ? Math.round((progress.completedTasks / progress.totalTasks) * 100) : 0;
+  const pendingCount = progress.totalTasks - progress.completedTasks;
+  const levelGoal = progress.pointsInLevel + progress.pointsToNextLevel;
+  const levelPercent = progress.isMaxLevel ? 100 : levelGoal > 0 ? (progress.pointsInLevel / levelGoal) * 100 : 0;
 
-  const badges = computeBadges({ points, completedTasks: progress.completed, streak: 0, redemptions: redemptionCount });
+  const badges = progress.badges;
   const unlockedBadges = badges.filter((b) => b.unlocked);
 
   // Próximo badge a desbloquear (el primero bloqueado)
@@ -112,7 +131,7 @@ function ChildHome() {
   // Frase motivacional contextual
   const motivationalPhrase = getMotivationalPhrase({
     progressPercent,
-    streak: 0,
+    streak: progress.streak,
     pendingCount,
   });
   const progressEmoji = getProgressEmoji(progressPercent);
@@ -145,16 +164,17 @@ function ChildHome() {
           </div>
         </div>
         <div>
-          <span className="child-level-badge">⭐ Nivel {level}</span>
+          <span className="child-level-badge">⭐ Nivel {progress.level}</span>
           <div className="level-progress-wrap" style={{ marginTop: 10, minWidth: 140 }}>
             <div className="level-progress-bar">
               <div
                 className="level-progress-fill"
-                style={{ width: `${(levelProgress / nextLevelThreshold) * 100}%` }}
+                style={{ width: `${levelPercent}%` }}
               />
             </div>
             <p className="level-progress-label">
-              {levelProgress} / {nextLevelThreshold} pts → Nv {level + 1}
+              {progress.isMaxLevel
+              ? "¡Nivel máximo!" : `${progress.pointsInLevel} / ${levelGoal} pts → Nv ${progress.level + 1}`}
             </p>
           </div>
         </div>
@@ -209,7 +229,7 @@ function ChildHome() {
         <div className="stat-card">
           <div className="stat-card-info">
             <h3>Mis Puntos</h3>
-            <p className="stat-card-value">{points}</p>
+            <p className="stat-card-value">{progress.points}</p>
           </div>
           <div className="stat-card-icon purple">⭐</div>
         </div>
@@ -217,7 +237,7 @@ function ChildHome() {
         <div className="stat-card">
           <div className="stat-card-info">
             <h3>Tareas Completadas</h3>
-            <p className="stat-card-value green">{progress.completed}</p>
+            <p className="stat-card-value green">{progress.completedTasks}</p>
           </div>
           <div className="stat-card-icon green">✅</div>
         </div>
@@ -233,7 +253,7 @@ function ChildHome() {
         <div className="stat-card">
           <div className="stat-card-info">
             <h3>Recompensas Canjeadas</h3>
-            <p className="stat-card-value">{redemptionCount}</p>
+            <p className="stat-card-value">{progress.redemptions}</p>
           </div>
           <div className="stat-card-icon blue">🎁</div>
         </div>
@@ -243,8 +263,8 @@ function ChildHome() {
       <div className="child-progress-section">
         <div className="child-progress-meta">
           <span>
-            Progreso general: <strong>{progress.completed}</strong> de{" "}
-            <strong>{progress.total}</strong> tareas completadas
+            Progreso general: <strong>{progress.completedTasks}</strong> de{" "}
+            <strong>{progress.totalTasks}</strong> tareas completadas
           </span>
           <span className="child-progress-percent">{progressPercent}%</span>
         </div>
