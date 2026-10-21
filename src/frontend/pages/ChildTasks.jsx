@@ -3,12 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
 import { getTasksByChild } from "../services/childService";
 import { completeTask, uncompleteTask, submitTaskWithPhoto } from "../services/taskService";
-import { getChildPoints } from "../services/dashboardService";
+import { fetchChildProgress } from "../services/apiClient";
 import { difficultyOf } from "../lib/taskDifficulty";
 import TaskPhotoUploader from "../components/TaskPhotoUploader";
 import CelebrationOverlay from "../components/child/CelebrationOverlay";
-import { POINTS_PER_LEVEL } from "../lib/constants";
-import { computeBadges } from "../lib/badges";
 import { getTaskCompletePhrase, getLevelUpPhrase } from "../lib/motivationalPhrases";
 
 function formatDate(isoString) {
@@ -28,44 +26,67 @@ function getTimeRemaining(dueDateStr) {
   return { text: "Vence muy pronto", className: "task-overdue" };
 }
 
+// Carga tareas y progreso por separado: si uno falla, el otro se sigue mostrando.
+async function loadTasksData(childId) {
+  const data = { tasks: [], progress: null };
+
+  try {
+    data.tasks = await getTasksByChild(childId);
+  } catch (err) {
+    console.error("Error cargando tareas del hijo:", err);
+  }
+
+  try {
+    data.progress = await fetchChildProgress(childId);
+  } catch (err) {
+    console.error("Error cargando el progreso del hijo:", err);
+  }
+
+  return data;
+}
+
+// Pide al servidor el progreso actualizado; si falla, devuelve null.
+async function refreshProgress(childId) {
+  try {
+    return await fetchChildProgress(childId);
+  } catch (err) {
+    console.error("Error actualizando el progreso del hijo:", err);
+    return null;
+  }
+}
+
 function ChildTasks() {
   const navigate = useNavigate();
   const user = getUserSession();
 
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("pending");
-  const [points, setPoints] = useState(0);
+  // Puntos, nivel e insignias calculados por la API (ADR-004).
+  const [progress, setProgress] = useState({ points: 0, level: 1, badges: [] });
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [completing, setCompleting] = useState(null);
   const [uncompleting, setUncompleting] = useState(null);
   const [uploadingFor, setUploadingFor] = useState(null);
   const [celebration, setCelebration] = useState(null); // { type, data }
-  const [completedCount, setCompletedCount] = useState(0);
 
   useEffect(() => {
     if (!user || user.role !== "child") {
       navigate("/login-child");
       return;
     }
-    loadData();
-  }, []);
-
-  async function loadData() {
-    try {
-      const [tasksData, pts] = await Promise.all([
-        getTasksByChild(user.id),
-        getChildPoints(user.id),
-      ]);
-      setTasks(tasksData);
-      setPoints(pts);
-      setCompletedCount(tasksData.filter((t) => t.status === "completed").length);
-    } catch (err) {
-      console.error("Error cargando tareas del hijo:", err);
-    } finally {
+    let active = true;
+    loadTasksData(user.id).then((data) => {
+      if (!active) return;
+      setTasks(data.tasks);
+      if (data.progress) setProgress(data.progress);
       setLoading(false);
-    }
-  }
+    });
+    // Si el hijo sale de la página antes de que termine la carga, no se actualiza nada.
+    return () => {
+      active = false;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function showNotification(message, pts) {
     setNotification({ message, points: pts });
@@ -76,8 +97,7 @@ function ChildTasks() {
     if (completing) return;
     setCompleting(task.id);
     try {
-      const oldPoints    = points;
-      const oldCompleted = completedCount;
+      const before = progress;
 
       await completeTask(task);
 
@@ -87,22 +107,20 @@ function ChildTasks() {
           : t)
       );
 
-      const newPoints    = oldPoints + task.points;
-      const newCompleted = oldCompleted + 1;
-      setPoints(newPoints);
-      setCompletedCount(newCompleted);
+      // El servidor recalcula el progreso; aquí solo se compara antes y después
+      // para saber qué celebrar.
+      const after = await refreshProgress(user.id);
+      if (after) setProgress(after);
 
-      const didLevelUp = Math.floor(oldPoints / POINTS_PER_LEVEL) < Math.floor(newPoints / POINTS_PER_LEVEL);
-
-      // Detectar badge recién desbloqueado.
-      const prevBadges = computeBadges({ points: oldPoints, completedTasks: oldCompleted, streak: 0, redemptions: 0 });
-      const newBadges  = computeBadges({ points: newPoints, completedTasks: newCompleted, streak: 0, redemptions: 0 });
-      const newUnlocked = newBadges.filter((b, i) => b.unlocked && !prevBadges[i].unlocked);
+      const didLevelUp = after !== null && after.level > before.level;
+      const newUnlocked = after === null ? [] : after.badges.filter(
+        (b) => b.unlocked && !before.badges.find((prev) => prev.id === b.id)?.unlocked
+      );
 
       if (didLevelUp) {
         setCelebration({
           type: "levelup",
-          data: { level: Math.floor(newPoints / POINTS_PER_LEVEL) + 1, phrase: getLevelUpPhrase() },
+          data: { level: after.level, phrase: getLevelUpPhrase() },
         });
       } else if (newUnlocked.length > 0) {
         setCelebration({ type: "badge", data: { badge: newUnlocked[0] } });
@@ -127,7 +145,8 @@ function ChildTasks() {
       setTasks((prev) =>
         prev.map((t) => t.id === task.id ? { ...t, status: "pending", completed_at: null } : t)
       );
-      setPoints((prev) => prev - task.points);
+      const after = await refreshProgress(user.id);
+      if (after) setProgress(after);
       showNotification("Tarea desmarcada", -task.points);
     } catch (err) {
       console.error("Error desmarcando tarea:", err);
@@ -185,7 +204,7 @@ function ChildTasks() {
           <p className="dashboard-subtitle">Completa tus tareas y gana puntos.</p>
         </div>
         <div className="child-points-pill">
-          ⭐ <span className="child-points-pill-value">{points}</span> puntos
+          ⭐ <span className="child-points-pill-value">{progress.points}</span> puntos
         </div>
       </div>
 
