@@ -7,11 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "api": "node --env-file=.env.local --watch src/backend/api/server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.0",
     "bcryptjs": "^3.0.3",
+    "express": "^5.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1"
@@ -25,6 +29,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "vite": "^7.3.1"
+    "supertest": "^7.3.1",
+    "vite": "^7.3.1",
+    "vitest": "^4.1.12"
   }
 }

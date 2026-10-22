@@ -33,4 +33,11 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // El backend y las pruebas corren en Node.js, no en el navegador.
+    files: ['src/backend/**/*.js', 'tests/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
