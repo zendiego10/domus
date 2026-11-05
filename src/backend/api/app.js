@@ -2,6 +2,7 @@
 // Se exporta sin arrancar, para que la usen el servidor local, Vercel y las pruebas.
 import express from "express";
 import { progressRouter } from "./routes/progress.js";
+import { tasksRouter } from "./routes/tasks.js";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api", progressRouter);
+app.use("/api", tasksRouter);
 
 // Cualquier ruta que no exista.
 app.use((req, res) => {

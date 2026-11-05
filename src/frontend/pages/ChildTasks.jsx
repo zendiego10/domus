@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserSession } from "../utils/auth";
 import { getTasksByChild } from "../services/childService";
-import { completeTask, uncompleteTask, submitTaskWithPhoto } from "../services/taskService";
-import { fetchChildProgress } from "../services/apiClient";
+import { uncompleteTask, submitTaskWithPhoto } from "../services/taskService";
+import { fetchChildProgress, completeTask } from "../services/apiClient";
+import { createNotification } from "../services/notificationService";
 import { difficultyOf } from "../lib/taskDifficulty";
 import TaskPhotoUploader from "../components/TaskPhotoUploader";
 import CelebrationOverlay from "../components/child/CelebrationOverlay";
@@ -99,7 +100,11 @@ function ChildTasks() {
     try {
       const before = progress;
 
-      await completeTask(task);
+      // La API valida y completa la tarea en una sola transacción (ADR-001, ADR-003).
+      await completeTask(task.id, user.id);
+
+      // Aviso al padre: es informativo, si falla no afecta la tarea.
+      createNotification(task.parent_id, "parent", "task_completed", "Tarea completada", task.title).catch(() => {});
 
       setTasks((prev) =>
         prev.map((t) => t.id === task.id
