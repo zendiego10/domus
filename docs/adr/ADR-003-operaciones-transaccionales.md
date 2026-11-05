@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-10-20
-- **Implementación:** Iniciada en semana 13 (columna `task_id` y función `complete_task` en `supabase/migrations/001_complete_task.sql`, invocada desde `TaskRepository`; las demás funciones quedan para la semana 15)
+- **Implementación:** Implementada parcialmente. La columna `task_id` y la función `complete_task` están en `supabase/migrations/001_complete_task.sql`, aplicadas sobre la base desplegada e invocadas desde `TaskRepository` a través de `POST /api/tasks/:id/complete`. Las demás operaciones (`approve_task_review`, `uncomplete_task`, `delete_task` y `approve_reward_request`) siguen sin transacción
 
 ## Contexto y problema
 
@@ -57,6 +57,17 @@ Corresponde al escenario de calidad de confiabilidad de la semana 8: ante un fal
 **Compensar manualmente desde el código**: si el segundo paso falla, ejecutar una operación inversa que deshaga el primero. Se descartó porque la compensación viaja por la misma red que ya falló: si se cae la conexión, la orden de deshacer tampoco llega, y queda el mismo estado inconsistente que se quería evitar, ahora con el doble de código.
 
 **Mantener las escrituras separadas y agregar un proceso de reparación** que recorra periódicamente las tablas buscando inconsistencias. Se descartó por desproporcionado para el tamaño del módulo y porque no evita que el usuario vea datos incorrectos entre el fallo y la reparación.
+
+## Evidencia sobre la base desplegada
+
+El efecto de la decisión es observable comparando dos registros reales de `activity_log`:
+
+| Registro | Camino | `task_id` | Separación entre las dos escrituras |
+|---|---|---|---|
+| Fila 47 | Anterior, dos llamadas independientes | vacío | unos 2 segundos |
+| Fila 52 ("Limpiar el baño") | `complete_task`, una sola transacción | 19 | ninguna: misma marca de tiempo que la tarea (17:07:19.885062) |
+
+La marca de tiempo idéntica confirma que la actualización de `tasks` y la inserción en `activity_log` ocurrieron dentro de la misma transacción, y la columna `task_id` poblada confirma que el historial ya no depende del título.
 
 ## Consecuencias
 
