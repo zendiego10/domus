@@ -58,11 +58,11 @@ La columna **Semana** indica cuándo se implementa cada componente: `13` en la t
 | API | App Express | Arma el servidor y registra las rutas | Controladores | `src/backend/api/app.js` | 13 |
 | API | AuthMiddleware | Verifica el token JWT, el rol y que el recurso pertenezca a la familia | — | `src/backend/api/middleware/auth.js` | 15 |
 | API | ProgressController | `GET /api/children/:id/progress`: puntos, nivel, racha e insignias | GamificationService | `src/backend/api/routes/progress.js` | 13 |
-| API | TaskController | Endpoints de tareas: crear, completar, enviar evidencia, aprobar, rechazar, revertir, eliminar | TaskService | `src/backend/api/routes/tasks.js` | 15 |
+| API | TaskController | `POST /api/tasks/:id/complete` (construido). Los demás endpoints de tareas quedan pendientes | TaskRepository, TaskStateMachine | `src/backend/api/routes/tasks.js` | Parcial |
 | API | RewardController | Endpoints de solicitudes y aprobación de canjes | RewardService | `src/backend/api/routes/rewards.js` | 15 |
 | Negocio | GamificationService | Única fuente de las reglas de puntos, nivel (con tope `MAX_LEVEL`), racha e insignias | ChildRepository, TaskRepository | `src/backend/domain/gamification.js` | 13 |
 | Negocio | TaskStateMachine | Define qué transición de estado de una tarea puede ejecutar cada rol | — | `src/backend/domain/taskStateMachine.js` | 13 |
-| Negocio | TaskService | Casos de uso de tareas; valida con TaskStateMachine antes de escribir | TaskStateMachine, TaskRepository, NotificationService | `src/backend/domain/taskService.js` | 15 |
+| Negocio | TaskService | Casos de uso de tareas; valida con TaskStateMachine antes de escribir. No construido: hoy el controlador invoca directamente TaskRepository | TaskStateMachine, TaskRepository, NotificationService | `src/backend/domain/taskService.js` (pendiente) | Pendiente |
 | Negocio | RewardService | Solicitudes y aprobación de canjes | RewardRepository, GamificationService | `src/backend/domain/rewardService.js` | 15 |
 | Negocio | NotificationService | Registro de notificaciones para padre e hijo | Repositorios | `src/backend/domain/notificationService.js` | 15 |
 | Datos | supabaseAdmin | Cliente de Supabase con la clave de servicio; existe solo en el servidor | Supabase | `src/backend/data/supabaseAdmin.js` | 13 |
@@ -77,10 +77,10 @@ La columna **Semana** indica cuándo se implementa cada componente: `13` en la t
 
 | ADR | Problema | Cambio propuesto | Código afectado | Atributo | Estado |
 |---|---|---|---|---|---|
-| [ADR-001](adr/ADR-001-api-rest-en-capas.md) · API REST en capas | P4 | API REST propia en `src/backend/` con capas api / domain / data; el navegador solo habla con la API a través de `apiClient.js` | `taskService.js`, `rewardService.js`, `dashboardService.js`, `getTasksByChild()`, `supabase.js`, vistas | Seguridad (integridad) | Iniciada |
-| [ADR-002](adr/ADR-002-autenticacion-en-servidor.md) · Autenticación en servidor | P3 | Login en la API con token JWT, `AuthMiddleware` que valida rol y familia, RLS activado y bucket de fotos privado | `loginParent()`, `loginChild()`, `utils/auth.js`, `ProtectedRoute.jsx`, `TaskPhotoUploader.jsx` | Seguridad (confidencialidad, autenticidad) | Planeada semana 15 |
-| [ADR-003](adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | P2 | Cada operación de varias escrituras se vuelve una función de PostgreSQL en una sola transacción; se agrega `task_id` a `activity_log` | `completeTask()`, `approveTaskReview()`, `uncompleteTask()`, `deleteTask()`, `approveRequest()` | Confiabilidad (tolerancia a fallos, consistencia) | Iniciada |
-| [ADR-004](adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | P1 | Todas las reglas de puntos, nivel, racha e insignias se concentran en `gamification.js` y se exponen en un único endpoint | `lib/badges.js`, `lib/constants.js`, `dashboardService.js`, cálculos en `ChildHome.jsx`, `ChildTasks.jsx`, `ChildProfile.jsx`, `ParentHome.jsx` | Mantenibilidad (modularidad, modificabilidad, capacidad de prueba) | Implementada |
+| [ADR-001](adr/ADR-001-api-rest-en-capas.md) · API REST en capas | P4 | API REST propia en `src/backend/` con capas api / domain / data; el navegador solo habla con la API a través de `apiClient.js` | `taskService.js`, `rewardService.js`, `dashboardService.js`, `getTasksByChild()`, `supabase.js`, vistas | Seguridad (integridad) | Implementada parcialmente |
+| [ADR-002](adr/ADR-002-autenticacion-en-servidor.md) · Autenticación en servidor | P3 | Login en la API con token JWT, `AuthMiddleware` que valida rol y familia, RLS activado y bucket de fotos privado | `loginParent()`, `loginChild()`, `utils/auth.js`, `ProtectedRoute.jsx`, `TaskPhotoUploader.jsx` | Seguridad (confidencialidad, autenticidad) | No implementada |
+| [ADR-003](adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | P2 | Cada operación de varias escrituras se vuelve una función de PostgreSQL en una sola transacción; se agrega `task_id` a `activity_log` | `completeTask()`, `approveTaskReview()`, `uncompleteTask()`, `deleteTask()`, `approveRequest()` | Confiabilidad (tolerancia a fallos, consistencia) | Implementada parcialmente |
+| [ADR-004](adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | P1 | Todas las reglas de puntos, nivel, racha e insignias se concentran en `gamification.js` y se exponen en un único endpoint | `lib/badges.js`, `lib/constants.js`, `dashboardService.js`, cálculos en `ChildHome.jsx`, `ChildTasks.jsx`, `ChildProfile.jsx`, `ParentHome.jsx` | Mantenibilidad (modularidad, modificabilidad, capacidad de prueba) | Implementada parcialmente |
 
 ## 5. Escenarios de calidad
 
@@ -136,12 +136,13 @@ Los diagramas muestran el sistema **después** de la refactorización. Se encuen
 - [C4 Nivel 1 — Contexto](diagramas/c4-contexto.png)
 - [C4 Nivel 2 — Contenedores](diagramas/c4-contenedores.png)
 - [C4 Nivel 3 — Componentes del módulo MVP](diagramas/c4-componentes.png)
+- [Diagrama de despliegue](diagramas/c4-despliegue.png)
 
 El cambio principal frente a la arquitectura actual es visible en el diagrama de contenedores: la aplicación web ya no tiene comunicación directa con la base de datos. Todo pasa por la API REST.
 
 ## 7. Estado de implementación
 
-**Semana 13 — hecho en esta entrega**
+**Construido**
 
 Documentación
 
@@ -160,20 +161,21 @@ Capa de datos (ADR-001, ADR-003)
 
 Capa de API y presentación (ADR-001)
 
-- `src/backend/api/`: App Express y `ProgressController` con el endpoint `GET /api/children/:id/progress`, desplegado en Vercel como función serverless.
-- `src/frontend/services/apiClient.js`: `ChildHome.jsx`, `ChildTasks.jsx` y `ChildProfile.jsx` muestran el progreso que entrega la API, sin recalcularlo.
+- `src/backend/api/`: App Express, `ProgressController` con `GET /api/children/:id/progress` y `TaskController` con `POST /api/tasks/:id/complete`, desplegados en Vercel como función serverless.
+- `src/frontend/services/apiClient.js`: `ChildHome.jsx`, `ChildTasks.jsx` y `ChildProfile.jsx` muestran el progreso que entrega la API, y completar una tarea desde la vista del hijo pasa por el endpoint, no por Supabase.
+- Se retiraron del frontend `lib/badges.js` y las constantes `POINTS_PER_LEVEL` y `MAX_LEVEL`, con lo que el cálculo viejo dejó de existir.
 
 Pruebas
 
-- 44 pruebas en `tests/`, unitarias y de integración, todas pasando: `gamification.test.js`, `taskStateMachine.test.js`, `taskRepository.test.js` y `progress.test.js`.
+- 52 pruebas en `tests/`, unitarias y de integración, todas pasando: `gamification.test.js` (17), `taskStateMachine.test.js` (17), `taskRepository.test.js` (4), `progress.test.js` (6) y `tasks.test.js` (8).
 
-**Semana 15 — pendiente para la entrega final**
+**Alcance no cubierto**
 
-- Autenticación en el servidor, `AuthMiddleware` y activación de RLS (ADR-002).
-- Endpoints REST de tareas y canjes, y migración de las vistas del padre a `apiClient`, incluido el cálculo de nivel que todavía queda en `ParentHome.jsx` (ADR-001, ADR-004).
+- Autenticación en el servidor, `AuthMiddleware` y activación de RLS (ADR-002). La API recibe el `childId` en el cuerpo y comprueba que la tarea pertenezca a ese hijo, pero no puede verificar quién envía la petición.
+- Las acciones del padre sobre tareas (aprobar, rechazar, revertir, eliminar) y los canjes siguen escribiendo desde el navegador, sin transacción (ADR-001, ADR-003).
+- `ParentHome.jsx` todavía calcula el nivel por su cuenta (ADR-004).
 - Funciones transaccionales restantes: `approve_task_review`, `uncomplete_task`, `delete_task` y `approve_reward_request` (ADR-003).
 - Bucket de fotos privado con enlaces temporales (ADR-002).
-- Pruebas de integración de los endpoints de tareas y canjes.
 
 ---
 
