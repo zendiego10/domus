@@ -1,0 +1,74 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Página-1" id="Gd1TGjI-BFMeGtBDMokl">
+    <mxGraphModel dx="1241" dy="1804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font face=&quot;Tahoma&quot; style=&quot;font-size: 18px;&quot;&gt;C4 - Diagrama de Contexto&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="291" x="54.5" y="-10" as="geometry" />
+        </mxCell>
+        <object placeholders="1" c4Name="Padre/Madre" c4Type="Usuario del sistema" c4Description="Crea tareas, revisa progreso y aprueba canjes." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#cccccc&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="Padre/Madre">
+          <mxCell parent="1" style="html=1;fontSize=11;dashed=0;whiteSpace=wrap;fillColor=#083F75;strokeColor=#06315C;fontColor=#ffffff;shape=mxgraph.c4.person2;align=center;metaEdit=1;points=[[0.5,0,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0]];resizable=0;" vertex="1">
+            <mxGeometry height="180" width="200" x="75.5" y="30" as="geometry" />
+          </mxCell>
+        </object>
+        <object placeholders="1" c4Name="Hijo/a" c4Type="Usuario del sistema" c4Description="Completa tareas, sube evidencia y consulta progreso." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#cccccc&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="5nse6yxvwzHFwGDBhN7u-8">
+          <mxCell parent="1" style="html=1;fontSize=11;dashed=0;whiteSpace=wrap;fillColor=#083F75;strokeColor=#06315C;fontColor=#ffffff;shape=mxgraph.c4.person2;align=center;metaEdit=1;points=[[0.5,0,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0]];resizable=0;" vertex="1">
+            <mxGeometry height="180" width="200" x="520" y="30" as="geometry" />
+          </mxCell>
+        </object>
+        <object placeholders="1" c4Name="Domus" c4Type="" c4Description="Sistema de gestión de tareas y gamificación familiar." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#cccccc&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="5nse6yxvwzHFwGDBhN7u-9">
+          <mxCell parent="1" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#1061B0;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#0D5091;metaEdit=1;resizable=0;points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];" vertex="1">
+            <mxGeometry height="120" width="240" x="300" y="340" as="geometry" />
+          </mxCell>
+        </object>
+        <object placeholders="1" c4Name="Supabase" c4Type="Sistema externo" c4Description="Base de datos y almacenamiento de fotos (Storage)." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#cccccc&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="5nse6yxvwzHFwGDBhN7u-11">
+          <mxCell parent="1" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#8C8496;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#736782;metaEdit=1;resizable=0;points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];" vertex="1">
+            <mxGeometry height="120" width="240" x="87.75" y="570" as="geometry" />
+          </mxCell>
+        </object>
+        <object placeholders="1" c4Name="Brevo" c4Type="Sistema externo" c4Description="Servicio de envío de correos de recuperación de cuenta." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#cccccc&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="5nse6yxvwzHFwGDBhN7u-12">
+          <mxCell parent="1" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#8C8496;fontColor=#ffffff;align=center;arcSize=10;strokeColor=#736782;metaEdit=1;resizable=0;points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];" vertex="1">
+            <mxGeometry height="120" width="240" x="530" y="570" as="geometry" />
+          </mxCell>
+        </object>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-15" edge="1" parent="1" source="Padre/Madre" style="endArrow=classic;html=1;rounded=0;defaultLabelBackgroundColor=gap;exitX=0.85;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="5nse6yxvwzHFwGDBhN7u-9" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="510" y="480" as="sourcePoint" />
+            <mxPoint x="560" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-16" edge="1" parent="1" source="5nse6yxvwzHFwGDBhN7u-8" style="endArrow=classic;html=1;rounded=0;defaultLabelBackgroundColor=gap;entryX=0.75;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" target="5nse6yxvwzHFwGDBhN7u-9" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="510" y="480" as="sourcePoint" />
+            <mxPoint x="560" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-17" edge="1" parent="1" source="5nse6yxvwzHFwGDBhN7u-9" style="endArrow=classic;html=1;rounded=0;defaultLabelBackgroundColor=gap;exitX=0.03;exitY=1.014;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.711;entryY=-0.028;entryDx=0;entryDy=0;entryPerimeter=0;" target="5nse6yxvwzHFwGDBhN7u-11" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="175" y="450" as="sourcePoint" />
+            <mxPoint x="225" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-18" edge="1" parent="1" source="5nse6yxvwzHFwGDBhN7u-9" style="endArrow=classic;html=1;rounded=0;defaultLabelBackgroundColor=gap;exitX=0.963;exitY=0.999;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="5nse6yxvwzHFwGDBhN7u-12" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="510" y="480" as="sourcePoint" />
+            <mxPoint x="474" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Gestiona tareas, revisa progreso y aprueba canjes (Vía navegador)" vertex="1">
+          <mxGeometry height="30" width="135.5" x="150" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Completa tareas, sube evidencia y consulta progreso (vía navegador)" vertex="1">
+          <mxGeometry height="30" width="150" x="530" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-21" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Guarda y consulta datos y fotos (API de Supabase)" vertex="1">
+          <mxGeometry height="30" width="135.5" x="150" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="5nse6yxvwzHFwGDBhN7u-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Envía correo de recuperación (API de Brevo)&amp;nbsp;" vertex="1">
+          <mxGeometry height="30" width="135.5" x="560" y="490" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
