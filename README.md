@@ -2,7 +2,8 @@
 
 Domus es una aplicación web que ayuda a las familias a asignar responsabilidades académicas y domésticas a los hijos y a reconocer su cumplimiento. Tiene dos roles, **padre/madre** e **hijo**, cada uno con su propio panel, y premia las tareas cumplidas con puntos canjeables por recompensas que define la familia.
 
-Aplicación desplegada: https://domus-7bv7.vercel.app
+- **Aplicación desplegada:** https://domus-7bv7.vercel.app
+- **Repositorio (código, ADR, diagramas y pruebas):** https://github.com/zendiego10/domus
 
 ## Proyecto de re-arquitectura
 
