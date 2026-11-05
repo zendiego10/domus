@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-10-20
-- **Implementación:** Implementada en semana 13 para las vistas del hijo (`src/backend/domain/gamification.js` con pruebas unitarias). `ParentHome.jsx` pasa a consumir la API en la semana 15, junto con el resto de las vistas del padre
+- **Implementación:** Implementada parcialmente. Las reglas viven en `src/backend/domain/gamification.js`, cubiertas por 17 pruebas unitarias, y las tres vistas del hijo muestran el progreso que entrega la API. Se retiraron del frontend `lib/badges.js` y las constantes `POINTS_PER_LEVEL` y `MAX_LEVEL`, con lo que el cálculo viejo dejó de existir. Queda pendiente que `ParentHome.jsx` deje de calcular el nivel por su cuenta
 
 ## Contexto y problema
 
