@@ -28,3 +28,6 @@ supabase/.temp/
 notes/
 usuarios_de_prueba.md
 CLAUDE.md
+
+# Llaves privadas (nunca se suben)
+*.pem

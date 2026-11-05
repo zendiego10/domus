@@ -106,12 +106,15 @@ Otros comandos:
 npm test
 ```
 
+52 pruebas en 5 archivos:
+
 | Archivo | Qué comprueba |
 |---|---|
 | `tests/unit/gamification.test.js` | Puntos, nivel con tope, racha por días seguidos e insignias |
 | `tests/unit/taskStateMachine.test.js` | Qué acción puede hacer cada rol según el estado de la tarea |
 | `tests/unit/taskRepository.test.js` | Llamada a la función transaccional `complete_task` y traducción de sus errores |
 | `tests/integration/progress.test.js` | Endpoint de progreso de punta a punta (api → domain), con datos simulados |
+| `tests/integration/tasks.test.js` | Endpoint para completar una tarea: éxito, entradas inválidas, tarea inexistente, tarea de otro hijo, transición no permitida y dos peticiones al mismo tiempo |
 
 La prueba del escenario de confiabilidad está en `supabase/tests/complete_task_atomicidad.sql`: se ejecuta en el SQL Editor de Supabase, fuerza una falla en la segunda escritura de `complete_task` y comprueba que la tarea no queda a medias. Al final deshace todos sus cambios.
 
@@ -123,37 +126,93 @@ URL base: `/api` (local: http://localhost:3001/api · producción: https://domus
 |---|---|---|---|
 | `GET` | `/api/health` | Comprueba que la API está en línea | `200` |
 | `GET` | `/api/children/:id/progress` | Puntos, nivel, racha e insignias del hijo, calculados en el servidor | `200` · `400` id inválido · `404` hijo no existe · `500` error interno |
+| `POST` | `/api/tasks/:id/complete` | El hijo completa una tarea. La API comprueba que la tarea sea suya y que `TaskStateMachine` permita la acción; la función `complete_task` actualiza la tarea y registra el historial en una sola transacción | `200` · `400` id inválido · `403` la tarea es de otro hijo · `404` la tarea no existe · `409` la tarea ya no está pendiente · `500` error interno |
 
-Ejemplo de respuesta de `GET /api/children/4/progress`:
+Los endpoints `GET` no reciben cuerpo. Todas las respuestas de error tienen la forma `{ "error": "CODIGO" }`.
+
+### Ejemplo: completar una tarea
+
+Petición `POST /api/tasks/19/complete`:
+
+```json
+{ "childId": 11 }
+```
+
+Respuesta `200` (la tarea actualizada):
 
 ```json
 {
-  "childId": 4,
-  "points": 650,
+  "id": 19,
+  "parent_id": 1,
+  "child_id": 11,
+  "title": "Limpiar el baño",
+  "description": "Limpia el baño de tu cuarto",
+  "category": "domestica",
+  "points": 200,
+  "status": "completed",
+  "due_date": "2026-05-26T13:40:00+00:00",
+  "completed_at": "2026-11-05T17:07:19.885062+00:00",
+  "created_at": "2026-05-26T11:41:18.751143+00:00",
+  "photo_url": null,
+  "reviewed_at": null,
+  "rejection_reason": null,
+  "is_recurring": false,
+  "recurrence_frequency": null,
+  "template_task_id": null
+}
+```
+
+Si se repite la misma petición, la tarea ya no está pendiente y la API responde `409`:
+
+```json
+{ "error": "INVALID_TRANSITION" }
+```
+
+En la base de datos, el registro de `activity_log` creado por esa petición tiene `task_id = 19` y exactamente la misma hora que `completed_at` (`17:07:19.885062`): las dos escrituras ocurrieron en la misma transacción.
+
+### Ejemplo: progreso del hijo
+
+Respuesta real de `GET /api/children/11/progress` después de completar la tarea anterior:
+
+```json
+{
+  "childId": 11,
+  "points": 600,
   "level": 7,
-  "pointsInLevel": 50,
-  "pointsToNextLevel": 50,
+  "pointsInLevel": 0,
+  "pointsToNextLevel": 100,
   "isMaxLevel": false,
-  "streak": 0,
-  "completedTasks": 13,
-  "totalTasks": 13,
-  "redemptions": 1,
+  "streak": 1,
+  "completedTasks": 3,
+  "totalTasks": 3,
+  "redemptions": 0,
   "badges": [
-    { "id": "first_task", "emoji": "🌟", "name": "Primera tarea", "unlocked": true }
+    { "id": "first_task", "emoji": "🌟", "name": "Primera tarea", "unlocked": true },
+    { "id": "streak_3", "emoji": "🔥", "name": "Racha de 3", "unlocked": false },
+    { "id": "centenarian", "emoji": "💯", "name": "Centenario", "unlocked": true },
+    { "id": "veteran", "emoji": "🏆", "name": "Veterano", "unlocked": false },
+    { "id": "collector", "emoji": "💎", "name": "Coleccionista", "unlocked": false }
   ]
 }
 ```
 
-Los endpoints de tareas y canjes, y la autenticación con token JWT, se agregan en la entrega final (semana 15).
+La racha cuenta los días seguidos con al menos una tarea completada, en la zona horaria de Bogotá; si hoy todavía no hay tareas, la racha sigue viva desde ayer. Los casos de varios días seguidos, de un día sin tareas y de la insignia "Racha de 3" están cubiertos en `tests/unit/gamification.test.js`.
 
 ## Estado de implementación
 
 | Decisión | Estado | Qué hay en el código |
 |---|---|---|
-| [ADR-001](docs/adr/ADR-001-api-rest-en-capas.md) · API REST en capas | Iniciada | Capas `api` / `domain` / `data`, App Express, endpoint de progreso, `taskStateMachine.js` y `apiClient.js`. Las vistas del hijo ya consumen la API |
-| [ADR-002](docs/adr/ADR-002-autenticacion-en-servidor.md) · Autenticación en el servidor | Planeada (semana 15) | — |
-| [ADR-003](docs/adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | Iniciada | Columna `task_id` en `activity_log` y función `complete_task` en `supabase/migrations/001_complete_task.sql`, llamada desde `TaskRepository` |
-| [ADR-004](docs/adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | Implementada (vistas del hijo) | `gamification.js` con pruebas unitarias; `ChildHome`, `ChildTasks` y `ChildProfile` muestran el progreso que calcula la API. `ParentHome` se migra en la semana 15 |
+| [ADR-001](docs/adr/ADR-001-api-rest-en-capas.md) · API REST en capas | Implementada parcialmente | Capas `api` / `domain` / `data`, App Express, `taskStateMachine.js` y `apiClient.js`. Las vistas del hijo consultan el progreso y completan tareas a través de la API |
+| [ADR-002](docs/adr/ADR-002-autenticacion-en-servidor.md) · Autenticación en el servidor | No implementada | — |
+| [ADR-003](docs/adr/ADR-003-operaciones-transaccionales.md) · Operaciones transaccionales | Implementada parcialmente | Columna `task_id` en `activity_log` y función `complete_task` (`supabase/migrations/001_complete_task.sql`), usada por `POST /api/tasks/:id/complete` |
+| [ADR-004](docs/adr/ADR-004-modulo-unico-gamificacion.md) · Módulo único de gamificación | Implementada parcialmente | `gamification.js` con pruebas unitarias; `ChildHome`, `ChildTasks` y `ChildProfile` muestran el progreso que calcula la API |
+
+### Alcance no cubierto
+
+- **Autenticación en el servidor (ADR-002):** no hay token JWT ni RLS. La API recibe la identidad del hijo en el cuerpo (`childId`) y comprueba que la tarea le pertenezca, pero no puede verificar quién envía la petición.
+- **Acciones del padre y canjes:** completar, aprobar, rechazar, revertir y eliminar tareas desde la vista del padre, y el ciclo de canjes, siguen escribiendo en Supabase desde el navegador, sin transacción.
+- **Vistas del padre:** `ParentHome` todavía calcula el nivel por su cuenta en lugar de usar el progreso que entrega la API.
+
 
 ## Equipo
 
