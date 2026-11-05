@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-10-20
-- **Implementación:** Iniciada en semana 13 (capas `api` / `domain` / `data`, App Express, endpoint `GET /api/children/:id/progress`, `TaskStateMachine` y `apiClient`; las vistas del hijo ya consumen la API)
+- **Implementación:** Implementada parcialmente. Están construidas las capas `api` / `domain` / `data`, la App Express, `TaskStateMachine`, `apiClient` y dos endpoints: `GET /api/children/:id/progress` y `POST /api/tasks/:id/complete`. Las vistas del hijo consumen la API; las del padre y los canjes siguen escribiendo directamente contra Supabase
 
 ## Contexto y problema
 
@@ -27,7 +27,7 @@ React (vistas + apiClient) → api (rutas) → domain (reglas) → data (acceso 
 ```
 
 - **`src/backend/api/`** — expone los endpoints HTTP y traduce peticiones y respuestas. No contiene reglas de negocio.
-- **`src/backend/domain/`** — concentra las reglas del módulo. Aquí viven `gamification.js` (ADR-004), `taskService.js` y `taskStateMachine.js`, que define qué transiciones de estado de una tarea puede ejecutar cada rol (un hijo puede pasar una tarea a `pending_review`, solo un padre puede aprobarla). Ninguna escritura ocurre sin pasar por esa validación.
+- **`src/backend/domain/`** — concentra las reglas del módulo. Aquí viven `gamification.js` (ADR-004) y `taskStateMachine.js`, que define qué transiciones de estado de una tarea puede ejecutar cada rol (un hijo puede pasar una tarea a `pending_review`, solo un padre puede aprobarla). Hoy esa validación se aplica al completar una tarea desde la vista del hijo; las demás escrituras todavía no pasan por ella.
 - **`src/backend/data/`** — único lugar con acceso a Supabase, a través de `supabaseAdmin.js`, que usa la clave de servicio guardada en las variables de entorno de Vercel y nunca llega al navegador.
 
 En el frontend, `src/frontend/services/apiClient.js` se convierte en el **único punto desde el que el navegador hace peticiones**. Ninguna vista vuelve a importar el cliente de Supabase ni un servicio de datos.
@@ -38,7 +38,7 @@ La regla de dependencia es estricta y en un solo sentido: una capa solo puede ll
 
 | Hoy | Después del refactor |
 |---|---|
-| `src/frontend/services/taskService.js` | `src/backend/domain/taskService.js` + `src/backend/api/routes/tasks.js` |
+| `src/frontend/services/taskService.js` | `src/backend/api/routes/tasks.js` (completar tarea, hecho) + el resto de casos de uso, pendiente |
 | `src/frontend/services/rewardService.js` | `src/backend/domain/rewardService.js` + `src/backend/api/routes/rewards.js` |
 | `src/frontend/services/dashboardService.js` | `src/backend/domain/gamification.js` + `src/backend/api/routes/progress.js` |
 | `getTasksByChild()` de `src/frontend/services/childService.js` (l. 98) | `src/backend/data/taskRepository.js`, expuesto vía `routes/tasks.js` |
