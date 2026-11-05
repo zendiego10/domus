@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-10-20
-- **Implementación:** Planeada para la semana 15
+- **Implementación:** No implementada. No hay emisión ni validación de token JWT, ni `AuthMiddleware`, ni RLS activado. El endpoint de completar tarea recibe el `childId` en el cuerpo y comprueba que la tarea pertenezca a ese hijo, pero el servidor no puede verificar quién envía la petición
 
 ## Contexto y problema
 
